@@ -1,171 +1,185 @@
-import { GoogleGenAI, Type, SchemaType, Modality } from "@google/genai";
-import { Flashcard, Quest, ScrambleWord, DailyQuest } from "../types";
 
-// 1. FIX: Vite pake import.meta.env, bukan process.env
-// Pastikan di Vercel namanya VITE_GEMINI_API_KEY
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+import React, { useState, useRef, useEffect } from 'react';
+import { identifyObject, playPronunciation } from '../services/geminiService';
+import { JournalEntry } from '../types';
 
-const genAI = new GoogleGenAI(API_KEY);
+interface CameraIslandProps {
+  onBack: () => void;
+  addPoints: (amount: number, reason: string) => void;
+  onSave?: (entry: Omit<JournalEntry, 'id' | 'date'>) => void;
+}
 
-const callAiWithRetry = async (fn: () => Promise<any>, retries = 2): Promise<any> => {
-  try {
-    return await fn();
-  } catch (err: any) {
-    if (retries > 0 && (err.message?.includes("internal error") || err.message?.includes("mC") || err.message?.includes("Canceled"))) {
-      console.warn(`AI error, retrying... (${retries} left)`);
-      await new Promise(r => setTimeout(r, 1000));
-      return callAiWithRetry(fn, retries - 1);
-    }
-    throw err;
-  }
-};
+const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }) => {
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ english: string, indonesian: string, fact: string } | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-export const evaluateMimicry = async (audioBlob: Blob, targetPhrase: string): Promise<{ score: number, feedback: string, idnFeedback: string }> => {
-  return callAiWithRetry(async () => {
-    const reader = new FileReader();
-    const base64Promise = new Promise<string>((resolve) => {
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.readAsDataURL(audioBlob);
-    });
-    const base64Audio = await base64Promise;
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, []);
 
-    const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash', // Pakai model stable jika preview bermasalah
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    score: { type: SchemaType.NUMBER },
-                    feedback: { type: SchemaType.STRING },
-                    idnFeedback: { type: SchemaType.STRING }
-                },
-                required: ["score", "feedback", "idnFeedback"]
-            }
-        }
-    });
-
-    const result = await model.generateContent([
-      { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Audio } },
-      { text: `The user is trying to mimic this English phrase: "${targetPhrase}". Evaluate their pronunciation and energy for a child. Return JSON: { "score": 1-100, "feedback": "string", "idnFeedback": "string" }` }
-    ]);
-    
-    return JSON.parse(result.response.text());
-  });
-};
-
-export const identifyObject = async (base64Image: string): Promise<{ english: string, indonesian: string, fact: string } | null> => {
-  return callAiWithRetry(async () => {
-    const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    english: { type: SchemaType.STRING },
-                    indonesian: { type: SchemaType.STRING },
-                    fact: { type: SchemaType.STRING }
-                },
-                required: ["english", "indonesian", "fact"]
-            }
-        }
-    });
-
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
-      { text: "Identify the main object in this image for a child. Return the English name, the Indonesian name, and a very short fun fact in English. Format as JSON." }
-    ]);
-    
-    return JSON.parse(result.response.text());
-  });
-};
-
-export const playPronunciation = async (text: string) => {
-  try {
-    // 2. FIX: Pastikan API KEY ada sebelum panggil
-    if (!API_KEY) throw new Error("API Key is missing!");
-
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash" // TTS biasanya butuh model yang mendukung multimodal output
-    });
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Say clearly: ${text}` }] }],
-      generationConfig: {
-        // @ts-ignore - SDK types might be outdated for some modalities
-        responseModalities: ["audio"], 
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
-        }
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
       }
-    });
-
-    const base64Audio = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    
-    if (base64Audio) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContext, 24000, 1);
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
-      source.start();
+    } catch (err) {
+      console.error("Camera access denied", err);
+      alert("Please allow camera access to use Magic Lens!");
     }
-  } catch (error) {
-    console.error("Speech generation failed", error);
-  }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const handleCapture = async () => {
+    if (!videoRef.current || !canvasRef.current || loading) return;
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      setCapturedImage(imageData);
+      
+      setLoading(true);
+      setResult(null);
+      
+      const data = await identifyObject(imageData);
+      if (data) {
+        setResult(data);
+        playPronunciation(data.english);
+        addPoints(40, `Found a ${data.english}! 🔍`);
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleSaveToJournal = () => {
+    if (!result || !capturedImage || !onSave) return;
+    onSave({
+      type: 'photo',
+      english: result.english,
+      indonesian: result.indonesian,
+      data: capturedImage
+    });
+    addPoints(10, "Captured in Scrapbook! 📓");
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 flex flex-col items-center">
+      <div className="w-full flex justify-between items-center mb-6">
+        <button onClick={onBack} className="text-blue-600 font-bold flex items-center gap-2">
+          ⬅️ Back to Map
+        </button>
+        <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full font-bold">
+          Magic Lens 🔍
+        </div>
+      </div>
+
+      <div className="relative w-full aspect-video bg-black rounded-[40px] overflow-hidden shadow-2xl border-4 border-white">
+        <video 
+          ref={videoRef} 
+          autoPlay 
+          playsInline 
+          className="w-full h-full object-cover"
+        />
+        
+        {loading && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
+            <p className="font-bold text-xl">Analyzing... ✨</p>
+          </div>
+        )}
+
+        {/* Results Overlay */}
+        {result && !loading && (
+          <div className="absolute inset-x-4 bottom-4 animate-in slide-in-from-bottom-10 duration-500">
+            <div className="bg-white/95 backdrop-blur p-6 rounded-[30px] shadow-2xl border-4 border-green-400">
+              <div className="flex items-start gap-4">
+                <div className="bg-green-100 text-3xl p-3 rounded-2xl">🐻</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-3xl font-black text-green-600 uppercase tracking-tight">{result.english}</h3>
+                    <button 
+                      onClick={() => playPronunciation(result.english)}
+                      className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm hover:scale-110 transition-transform"
+                    >
+                      🔊
+                    </button>
+                  </div>
+                  <p className="text-gray-500 font-bold mb-2">Artinya: <span className="text-blue-600">{result.indonesian}</span></p>
+                  <p className="text-gray-700 text-sm italic bg-gray-50 p-2 rounded-xl">
+                    "Did you know? {result.fact}"
+                  </p>
+                  <div className="mt-4 flex gap-2">
+                    <button 
+                      onClick={handleSaveToJournal}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-purple-700"
+                    >
+                      📓 Collect in Book
+                    </button>
+                    <button 
+                      onClick={() => setResult(null)}
+                      className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200"
+                    >
+                      Try Another
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setResult(null)}
+                  className="text-gray-300 hover:text-gray-500"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
+
+      {!result && !loading && (
+        <button 
+          onClick={handleCapture}
+          className="mt-8 bg-green-500 hover:bg-green-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-all active:scale-90 group"
+        >
+          <div className="w-14 h-14 border-4 border-white/40 rounded-full flex items-center justify-center group-hover:border-white">
+            <div className="w-10 h-10 bg-white rounded-full" />
+          </div>
+        </button>
+      )}
+      
+      {result && !loading && (
+        <button 
+          onClick={() => setResult(null)}
+          className="mt-8 bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+        >
+          Scan Something Else! 🔍
+        </button>
+      )}
+
+      <div className="mt-8 text-center text-gray-500 max-w-sm">
+        Point your camera at an object and press the button. Toby will tell you what it is!
+      </div>
+    </div>
+  );
 };
 
-// Helper decoders (Tetap sama seperti punyamu)
-function decodeBase64(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-    }
-  }
-  return buffer;
-}
-
-export const playPronunciation = async (text: string) => {
-  try {
-    const ttsAi = createAi();
-    const response = await ttsAi.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
-      config: {
-        // Corrected property name from responseModalalities to responseModalities
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
-      },
-    });
-
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (base64Audio) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContext, 24000, 1);
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
-      source.start();
-    }
-  } catch (error) {
-    console.error("Speech generation failed", error);
-  }
-};
+export default CameraIsland;
