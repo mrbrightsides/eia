@@ -1,144 +1,289 @@
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Flashcard, ScrambleWord, DailyQuest } from "../types";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+/* ===============================
+   ENV CONFIG
+================================= */
 
-// Inisialisasi AI
-const genAI = new GoogleGenAI(API_KEY);
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-const callAiWithRetry = async (fn: () => Promise<any>, retries = 2): Promise<any> => {
+if (!API_KEY) {
+  throw new Error("VITE_GEMINI_API_KEY is not defined in environment variables");
+}
+
+const createAi = () => new GoogleGenAI({ apiKey: API_KEY });
+
+/* ===============================
+   RETRY WRAPPER
+================================= */
+
+const callAiWithRetry = async (
+  fn: (ai: GoogleGenAI) => Promise<any>,
+  retries = 2
+): Promise<any> => {
   try {
-    if (!API_KEY) throw new Error("API Key hilang! Pastikan .env.local dan Vercel Env sudah diset VITE_GEMINI_API_KEY");
-    return await fn();
+    const ai = createAi();
+    return await fn(ai);
   } catch (err: any) {
-    // Retry logic untuk error internal/server
-    if (retries > 0 && (err.message?.includes("internal error") || err.message?.includes("503") || err.message?.includes("overloaded"))) {
-      console.warn(`AI sibuk, mencoba lagi... (${retries} sisa)`);
-      await new Promise(r => setTimeout(r, 1500));
+    if (
+      retries > 0 &&
+      (err.message?.includes("internal error") ||
+        err.message?.includes("Canceled") ||
+        err.message?.includes("mC"))
+    ) {
+      console.warn(`AI error, retrying... (${retries} left)`);
+      await new Promise((r) => setTimeout(r, 1000));
       return callAiWithRetry(fn, retries - 1);
     }
     throw err;
   }
 };
 
-// --- FITUR UTAMA ---
+/* ===============================
+   AUDIO EVALUATION
+================================= */
 
-export const identifyObject = async (base64Image: string): Promise<{ english: string, indonesian: string, fact: string } | null> => {
-  return callAiWithRetry(async () => {
-    // Bersihkan header base64 jika ada
-    const cleanBase64 = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
+export const evaluateMimicry = async (
+  audioBlob: Blob,
+  targetPhrase: string
+) => {
+  return callAiWithRetry(async (ai) => {
+    const base64Audio = await blobToBase64(audioBlob);
 
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      generationConfig: {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        {
+          inlineData: {
+            mimeType: audioBlob.type || "audio/webm",
+            data: base64Audio,
+          },
+        },
+        {
+          text: `The user is mimicking: "${targetPhrase}". Evaluate pronunciation for kids.
+          Return JSON { score, feedback, idnFeedback }`,
+        },
+      ],
+      config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: SchemaType.OBJECT,
+          type: Type.OBJECT,
           properties: {
-            english: { type: SchemaType.STRING },
-            indonesian: { type: SchemaType.STRING },
-            fact: { type: SchemaType.STRING }
+            score: { type: Type.NUMBER },
+            feedback: { type: Type.STRING },
+            idnFeedback: { type: Type.STRING },
           },
-          required: ["english", "indonesian", "fact"]
-        }
-      }
+          required: ["score", "feedback", "idnFeedback"],
+        },
+      },
     });
 
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
-      { text: "Identify the main object in this image for a child. Return the English name, the Indonesian name, and a very short fun fact in English. Format as JSON." }
-    ]);
-    
-    return JSON.parse(result.response.text());
+    return JSON.parse(response.text || "{}");
   });
 };
+
+/* ===============================
+   OBJECT IDENTIFICATION
+================================= */
+
+export const identifyObject = async (base64Image: string) => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: base64Image.split(",")[1],
+            },
+          },
+          {
+            text:
+              "Identify object for kids. Return JSON { english, indonesian, fact }",
+          },
+        ],
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            english: { type: Type.STRING },
+            indonesian: { type: Type.STRING },
+            fact: { type: Type.STRING },
+          },
+          required: ["english", "indonesian", "fact"],
+        },
+      },
+    });
+
+    return JSON.parse(response.text || "null");
+  });
+};
+
+/* ===============================
+   VOCABULARY GENERATOR
+================================= */
+
+export const getVocabulary = async (category: string): Promise<Flashcard[]> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Generate 5 English flashcards for kids category "${category}".`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              english: { type: Type.STRING },
+              indonesian: { type: Type.STRING },
+              example: { type: Type.STRING },
+              imageUrl: { type: Type.STRING },
+            },
+            required: ["english", "indonesian", "example", "imageUrl"],
+          },
+        },
+      },
+    });
+
+    return JSON.parse(response.text || "[]");
+  });
+};
+
+/* ===============================
+   DAILY QUEST
+================================= */
+
+export const generateDailyQuest = async (): Promise<Partial<DailyQuest>> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents:
+        "Generate simple English mission for child. Return JSON {title,idnTitle,goal,reward,type}",
+      config: { responseMimeType: "application/json" },
+    });
+
+    return JSON.parse(response.text || "{}");
+  });
+};
+
+/* ===============================
+   SCRAMBLE WORD
+================================= */
+
+export const getScrambleWords = async (): Promise<ScrambleWord[]> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents:
+        "Generate 5 simple scramble words for kids. JSON { word, hint }",
+      config: { responseMimeType: "application/json" },
+    });
+
+    return JSON.parse(response.text || "[]");
+  });
+};
+
+/* ===============================
+   CHAT SESSION
+================================= */
+
+export const startChatSession = (systemInstruction: string) => {
+  const ai = createAi();
+
+  return ai.chats.create({
+    model: "gemini-3-flash-preview",
+    config: {
+      systemInstruction:
+        systemInstruction +
+        " Always be encouraging. Mix English & Indonesian. Keep sentences short.",
+    },
+  });
+};
+
+/* ===============================
+   TEXT TO SPEECH
+================================= */
 
 export const playPronunciation = async (text: string) => {
   try {
-    if (!API_KEY) return;
+    const ai = createAi();
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Say clearly: ${text}` }] }],
-      generationConfig: {
-        // @ts-ignore - Support audio output
-        responseModalities: ["audio"], 
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
-        }
-      }
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: "Kore" },
+          },
+        },
+      },
     });
 
-    const base64Audio = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    
+    const base64Audio =
+      response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
     if (base64Audio) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContext, 24000, 1);
-      const source = audioContext.createBufferSource();
+      const ctx = new AudioContext({ sampleRate: 24000 });
+      const audioBuffer = await decodeAudio(
+        decodeBase64(base64Audio),
+        ctx,
+        24000,
+        1
+      );
+
+      const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      source.connect(ctx.destination);
       source.start();
     }
-  } catch (error) {
-    console.error("Gagal memutar suara:", error);
+  } catch (err) {
+    console.error("TTS failed", err);
   }
 };
 
-export const evaluateMimicry = async (audioBlob: Blob, targetPhrase: string): Promise<{ score: number, feedback: string, idnFeedback: string }> => {
-  return callAiWithRetry(async () => {
+/* ===============================
+   HELPERS
+================================= */
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve) => {
     const reader = new FileReader();
-    const base64Promise = new Promise<string>((resolve) => {
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.readAsDataURL(audioBlob);
-    });
-    const base64Audio = await base64Promise;
-
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            score: { type: SchemaType.NUMBER },
-            feedback: { type: SchemaType.STRING },
-            idnFeedback: { type: SchemaType.STRING }
-          },
-          required: ["score", "feedback", "idnFeedback"]
-        }
-      }
-    });
-
-    const result = await model.generateContent([
-      { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Audio } },
-      { text: `The user is trying to mimic this English phrase: "${targetPhrase}". Evaluate their pronunciation and energy for a child. Return JSON: { "score": 1-100, "feedback": "string", "idnFeedback": "string" }` }
-    ]);
-    
-    return JSON.parse(result.response.text());
+    reader.onloadend = () =>
+      resolve((reader.result as string).split(",")[1]);
+    reader.readAsDataURL(blob);
   });
-};
-
-// --- HELPER FUNCTIONS ---
-
-function decodeBase64(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
 }
 
-async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
+function decodeBase64(base64: string) {
+  const binary = atob(base64);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+async function decodeAudio(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  channels: number
+) {
   const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
+  const frameCount = dataInt16.length / channels;
+
+  const buffer = ctx.createBuffer(channels, frameCount, sampleRate);
+
+  for (let ch = 0; ch < channels; ch++) {
+    const channelData = buffer.getChannelData(ch);
+
     for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      channelData[i] =
+        dataInt16[i * channels + ch] / 32768.0;
     }
   }
+
   return buffer;
 }
