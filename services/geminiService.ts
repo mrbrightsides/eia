@@ -247,6 +247,18 @@ export const playPronunciation = async (text: string) => {
   }
 };
 
+export const translateToIndonesian = async (text: string): Promise<string> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Translate this text into simple, friendly Indonesian for children. Only return translated text: "${text}"`,
+    });
+
+    return response.text?.trim() || "Maaf, Toby tidak bisa menerjemahkan itu.";
+  }).catch(() => "Maaf, sirkuit penerjemah Toby sedang macet.");
+};
+
+
 /* ===============================
    HELPERS
 ================================= */
