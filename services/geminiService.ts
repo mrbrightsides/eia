@@ -1,15 +1,13 @@
-import { GoogleGenAI, Type, SchemaType, Modality } from "@google/genai";
+
+import { GoogleGenAI, Type, GenerateContentResponse, Modality } from "@google/genai";
 import { Flashcard, Quest, ScrambleWord, DailyQuest } from "../types";
 
-// 1. FIX: Vite pake import.meta.env, bukan process.env
-// Pastikan di Vercel namanya VITE_GEMINI_API_KEY
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+const createAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const genAI = new GoogleGenAI(API_KEY);
-
-const callAiWithRetry = async (fn: () => Promise<any>, retries = 2): Promise<any> => {
+const callAiWithRetry = async (fn: (ai: GoogleGenAI) => Promise<any>, retries = 2): Promise<any> => {
   try {
-    return await fn();
+    const ai = createAi();
+    return await fn(ai);
   } catch (err: any) {
     if (retries > 0 && (err.message?.includes("internal error") || err.message?.includes("mC") || err.message?.includes("Canceled"))) {
       console.warn(`AI error, retrying... (${retries} left)`);
@@ -21,7 +19,7 @@ const callAiWithRetry = async (fn: () => Promise<any>, retries = 2): Promise<any
 };
 
 export const evaluateMimicry = async (audioBlob: Blob, targetPhrase: string): Promise<{ score: number, feedback: string, idnFeedback: string }> => {
-  return callAiWithRetry(async () => {
+  return callAiWithRetry(async (ai) => {
     const reader = new FileReader();
     const base64Promise = new Promise<string>((resolve) => {
       reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
@@ -29,104 +27,214 @@ export const evaluateMimicry = async (audioBlob: Blob, targetPhrase: string): Pr
     });
     const base64Audio = await base64Promise;
 
-    const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash', // Pakai model stable jika preview bermasalah
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    score: { type: SchemaType.NUMBER },
-                    feedback: { type: SchemaType.STRING },
-                    idnFeedback: { type: SchemaType.STRING }
-                },
-                required: ["score", "feedback", "idnFeedback"]
-            }
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Audio } },
+        { text: `The user is trying to mimic this English phrase: "${targetPhrase}". Evaluate their pronunciation and energy for a child. Return JSON: { "score": 1-100, "feedback": "string", "idnFeedback": "string" }` }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            score: { type: Type.NUMBER },
+            feedback: { type: Type.STRING },
+            idnFeedback: { type: Type.STRING }
+          },
+          required: ["score", "feedback", "idnFeedback"]
         }
+      }
     });
+    return JSON.parse(response.text || "{}");
+  });
+};
 
-    const result = await model.generateContent([
-      { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Audio } },
-      { text: `The user is trying to mimic this English phrase: "${targetPhrase}". Evaluate their pronunciation and energy for a child. Return JSON: { "score": 1-100, "feedback": "string", "idnFeedback": "string" }` }
-    ]);
-    
-    return JSON.parse(result.response.text());
+export const verifyScavengerHunt = async (base64Image: string, target: string): Promise<{ found: boolean, detail: string, englishWord: string }> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
+        { text: `Verify if this image contains a: ${target}. If yes, confirm and give a fun fact. Return JSON: { "found": boolean, "detail": "string", "englishWord": "string" }` }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            found: { type: Type.BOOLEAN },
+            detail: { type: Type.STRING },
+            englishWord: { type: Type.STRING }
+          },
+          required: ["found", "detail", "englishWord"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  });
+};
+
+export const getVocabulary = async (category: string): Promise<Flashcard[]> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Generate 5 English vocabulary flashcards for elementary kids in the category "${category}". 
+      Provide the English word, its Indonesian translation, and a simple English example sentence. 
+      Also include a valid image URL from loremflickr.com using keywords related to the word (e.g., https://loremflickr.com/400/300/cartoon,dog). 
+      Format as JSON array of objects.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              english: { type: Type.STRING },
+              indonesian: { type: Type.STRING },
+              example: { type: Type.STRING },
+              imageUrl: { type: Type.STRING }
+            },
+            required: ["english", "indonesian", "example", "imageUrl"]
+          }
+        }
+      }
+    });
+    return JSON.parse(response.text || "[]");
+  });
+};
+
+export const generateDailyQuest = async (): Promise<Partial<DailyQuest>> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: "Generate a simple English learning mission for a child. Types: 'vocab', 'chat', 'scramble', 'scavenger'. Return a JSON with title (English), idnTitle (Indonesian), goal (number between 1-5), type, and reward (usually 200).",
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            idnTitle: { type: Type.STRING },
+            goal: { type: Type.NUMBER },
+            reward: { type: Type.NUMBER },
+            type: { type: Type.STRING }
+          },
+          required: ["title", "idnTitle", "goal", "reward", "type"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  }).catch(() => ({ title: "Word Explorer", idnTitle: "Penjelajah Kata", goal: 5, reward: 200, type: 'vocab' }));
+};
+
+export const getScrambleWords = async (): Promise<ScrambleWord[]> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Generate 5 simple English words (4-7 letters) for elementary kids to unscramble. 
+      Provide the English word and its Indonesian translation as a hint. 
+      Format as JSON array of objects.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              word: { type: Type.STRING },
+              hint: { type: Type.STRING }
+            },
+            required: ["word", "hint"]
+          }
+        }
+      }
+    });
+    return JSON.parse(response.text || "[]");
+  });
+};
+
+export const generateQuestImage = async (prompt: string): Promise<string | null> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [{ text: `A vibrant, cute, cartoon-style illustration for kids of: ${prompt}. Bright colors, high quality.` }]
+      },
+      config: {
+        imageConfig: { aspectRatio: "1:1" }
+      }
+    });
+    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+    return imagePart ? `data:image/png;base64,${imagePart.inlineData.data}` : null;
   });
 };
 
 export const identifyObject = async (base64Image: string): Promise<{ english: string, indonesian: string, fact: string } | null> => {
-  return callAiWithRetry(async () => {
-    const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: SchemaType.OBJECT,
-                properties: {
-                    english: { type: SchemaType.STRING },
-                    indonesian: { type: SchemaType.STRING },
-                    fact: { type: SchemaType.STRING }
-                },
-                required: ["english", "indonesian", "fact"]
-            }
-        }
-    });
-
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
-      { text: "Identify the main object in this image for a child. Return the English name, the Indonesian name, and a very short fun fact in English. Format as JSON." }
-    ]);
-    
-    return JSON.parse(result.response.text());
-  });
-};
-
-export const playPronunciation = async (text: string) => {
-  try {
-    // 2. FIX: Pastikan API KEY ada sebelum panggil
-    if (!API_KEY) throw new Error("API Key is missing!");
-
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash" // TTS biasanya butuh model yang mendukung multimodal output
-    });
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: `Say clearly: ${text}` }] }],
-      generationConfig: {
-        // @ts-ignore - SDK types might be outdated for some modalities
-        responseModalities: ["audio"], 
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: {
+        parts: [
+          { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
+          { text: "Identify the main object in this image for a child. Return the English name, the Indonesian name, and a very short fun fact in English. Format as JSON." }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            english: { type: Type.STRING },
+            indonesian: { type: Type.STRING },
+            fact: { type: Type.STRING }
+          },
+          required: ["english", "indonesian", "fact"]
         }
       }
     });
-
-    const base64Audio = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    
-    if (base64Audio) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContext, 24000, 1);
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
-      source.start();
-    }
-  } catch (error) {
-    console.error("Speech generation failed", error);
-  }
+    return JSON.parse(response.text || "null");
+  });
 };
 
-// Helper decoders (Tetap sama seperti punyamu)
+export const startChatSession = (systemInstruction: string) => {
+  const ai = createAi();
+  return ai.chats.create({
+    model: 'gemini-3-flash-preview',
+    config: {
+      systemInstruction: systemInstruction + " Always be encouraging and use a mix of English and Indonesian. Keep sentences short for kids."
+    }
+  });
+};
+
+export const translateToIndonesian = async (text: string): Promise<string> => {
+  return callAiWithRetry(async (ai) => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Translate this text to simple, child-friendly Indonesian. The translation should be warm and helpful. Only return the translated text: "${text}"`,
+    });
+    return response.text?.trim() || "Maaf, aku tidak bisa menerjemahkan itu.";
+  }).catch(() => "Maaf, sirkuit penerjemah Toby sedang macet.");
+};
+
+export const createVeoInstance = () => createAi();
+
 function decodeBase64(base64: string): Uint8Array {
   const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
 }
 
-async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number): Promise<AudioBuffer> {
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
