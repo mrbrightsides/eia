@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { identifyObject, playPronunciation } from '../services/geminiService';
 import { JournalEntry } from '../types';
@@ -51,21 +50,30 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
+    
     if (ctx) {
+      // Draw image to canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Convert to Base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       setCapturedImage(imageData);
       
       setLoading(true);
       setResult(null);
       
-      const data = await identifyObject(imageData);
-      if (data) {
-        setResult(data);
-        playPronunciation(data.english);
-        addPoints(40, `Found a ${data.english}! 🔍`);
+      try {
+        const data = await identifyObject(imageData);
+        if (data) {
+          setResult(data);
+          playPronunciation(data.english);
+          addPoints(40, `Found a ${data.english}! 🔍`);
+        }
+      } catch (error) {
+        console.error("Identification failed", error);
+        alert("Oops! Toby couldn't see that clearly. Try again!");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
   };
 
@@ -92,15 +100,19 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
       </div>
 
       <div className="relative w-full aspect-video bg-black rounded-[40px] overflow-hidden shadow-2xl border-4 border-white">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          className="w-full h-full object-cover"
-        />
+        {!capturedImage ? (
+           <video 
+             ref={videoRef} 
+             autoPlay 
+             playsInline 
+             className="w-full h-full object-cover"
+           />
+        ) : (
+           <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+        )}
         
         {loading && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20">
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
             <p className="font-bold text-xl">Analyzing... ✨</p>
           </div>
@@ -108,7 +120,7 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
 
         {/* Results Overlay */}
         {result && !loading && (
-          <div className="absolute inset-x-4 bottom-4 animate-in slide-in-from-bottom-10 duration-500">
+          <div className="absolute inset-x-4 bottom-4 animate-in slide-in-from-bottom-10 duration-500 z-30">
             <div className="bg-white/95 backdrop-blur p-6 rounded-[30px] shadow-2xl border-4 border-green-400">
               <div className="flex items-start gap-4">
                 <div className="bg-green-100 text-3xl p-3 rounded-2xl">🐻</div>
@@ -131,22 +143,19 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
                       onClick={handleSaveToJournal}
                       className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-purple-700"
                     >
-                      📓 Collect in Book
+                      📓 Collect
                     </button>
                     <button 
-                      onClick={() => setResult(null)}
+                      onClick={() => {
+                        setResult(null);
+                        setCapturedImage(null);
+                      }}
                       className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200"
                     >
                       Try Another
                     </button>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setResult(null)}
-                  className="text-gray-300 hover:text-gray-500"
-                >
-                  ✕
-                </button>
               </div>
             </div>
           </div>
@@ -155,7 +164,7 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {!result && !loading && (
+      {!result && !loading && !capturedImage && (
         <button 
           onClick={handleCapture}
           className="mt-8 bg-green-500 hover:bg-green-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-all active:scale-90 group"
@@ -166,15 +175,6 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
         </button>
       )}
       
-      {result && !loading && (
-        <button 
-          onClick={() => setResult(null)}
-          className="mt-8 bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
-        >
-          Scan Something Else! 🔍
-        </button>
-      )}
-
       <div className="mt-8 text-center text-gray-500 max-w-sm">
         Point your camera at an object and press the button. Toby will tell you what it is!
       </div>
