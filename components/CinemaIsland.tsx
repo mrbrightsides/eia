@@ -78,7 +78,7 @@ const CinemaIsland: React.FC<CinemaIslandProps> = ({ onBack, addPoints, onSave }
 
       const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
       if (downloadLink) {
-        const apiKey = process.env.API_KEY;
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         const response = await fetch(`${downloadLink}&key=${apiKey}`);
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
