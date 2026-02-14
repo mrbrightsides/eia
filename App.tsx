@@ -16,6 +16,9 @@ import MimicIsland from './components/MimicIsland';
 import ScavengerIsland from './components/ScavengerIsland';
 import PetIsland from './components/PetIsland';
 import TracingIsland from './components/TracingIsland';
+import SimonSaysIsland from './components/SimonSaysIsland';
+import ISpyIsland from './components/ISpyIsland';
+import TutorialOverlay from './components/TutorialOverlay';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
 const RANKS = ["Little Scout", "Junior Explorer", "Word Wizard", "Language Legend", "Island Master"];
@@ -96,7 +99,9 @@ const App: React.FC = () => {
       [GameType.MIMIC]: 0,
       [GameType.SCAVENGER]: 0,
       [GameType.PET]: 0,
-      [GameType.TRACING]: 0
+      [GameType.TRACING]: 0,
+      [GameType.SIMON_SAYS]: 0,
+      [GameType.I_SPY]: 0
     };
   });
 
@@ -107,9 +112,14 @@ const App: React.FC = () => {
 
   const [rewardMsg, setRewardMsg] = useState<{ text: string, points: number } | null>(null);
   const [levelUp, setLevelUp] = useState(false);
+  const [showStreakSplash, setShowStreakSplash] = useState(false);
   const [showBadges, setShowBadges] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editAvatar, setEditAvatar] = useState("");
+
   const [showJournal, setShowJournal] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -132,6 +142,23 @@ const App: React.FC = () => {
   const handleCreateProfile = (data: UserProfile) => {
     setProfile(data);
     localStorage.setItem('userProfile', JSON.stringify(data));
+  };
+
+  const handleUpdateProfile = () => {
+    if (!profile || !editName.trim()) return;
+    const updated = { ...profile, name: editName.trim(), avatar: editAvatar };
+    setProfile(updated);
+    localStorage.setItem('userProfile', JSON.stringify(updated));
+    setIsEditingProfile(false);
+    addPoints(10, "Profile Updated! ✨");
+  };
+
+  const completeTutorial = () => {
+    if (!profile) return;
+    const updated = { ...profile, tutorialComplete: true };
+    setProfile(updated);
+    localStorage.setItem('userProfile', JSON.stringify(updated));
+    addPoints(100, "Guided Tour Complete! 🗺️");
   };
 
   const addPoints = (amount: number, reason: string) => {
@@ -217,6 +244,13 @@ const App: React.FC = () => {
     });
   };
 
+  const startEditMode = () => {
+    if (!profile) return;
+    setEditName(profile.name);
+    setEditAvatar(profile.avatar);
+    setIsEditingProfile(true);
+  };
+
   useEffect(() => {
     const audio = new Audio("https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3");
     audio.loop = true;
@@ -246,20 +280,34 @@ const App: React.FC = () => {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     const lastLogin = localStorage.getItem('lastLogin');
+    
     if (lastLogin !== today) {
       let newStreak = 1;
       if (lastLogin === yesterday) {
         newStreak = streak + 1;
       }
+      
       setStreak(newStreak);
       localStorage.setItem('streakCount', newStreak.toString());
       localStorage.setItem('lastLogin', today);
-      const bonus = newStreak * 10;
-      const totalAward = 100 + bonus;
+      
+      // Calculate Enhanced Streak Bonus
+      const baseLoginBonus = 50;
+      const streakBonus = newStreak * 25;
+      const milestoneBonus = (newStreak % 7 === 0) ? 500 : 0;
+      const totalAward = baseLoginBonus + streakBonus + milestoneBonus;
+      
       setTimeout(() => {
-        addPoints(totalAward, newStreak > 1 ? `${newStreak} Day Streak! 🔥` : "Daily Bonus! 🎁");
+        setShowStreakSplash(true);
+        addPoints(totalAward, newStreak > 1 ? `${newStreak} Day Streak! 🔥` : "Welcome Back! 🎁");
+        
+        if (milestoneBonus > 0) {
+          setTimeout(() => addPoints(0, "Weekly Milestone Bonus! 🏆"), 1500);
+        }
+        
         if (newStreak >= 3) unlockBadge('streak_3');
       }, 1000);
+
       generateDailyQuest().then(q => {
         const fullQuest: DailyQuest = {
           id: Date.now().toString(),
@@ -288,11 +336,11 @@ const App: React.FC = () => {
       case GameType.TRACING:
         return <TracingIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.TRACING, 10); }} onSave={(entry) => addToJournal(entry)} unlockBadge={() => unlockBadge('writer')} />;
       case GameType.PET:
-        return <PetIsland onBack={back} profile={profile} addPoints={addPoints} updateMastery={() => updateMastery(GameType.PET, 10)} />;
+        return <PetIsland onBack={back} profile={profile} onUpdateProfile={(p) => { setProfile(p); localStorage.setItem('userProfile', JSON.stringify(p)); }} addPoints={addPoints} updateMastery={() => updateMastery(GameType.PET, 10)} unlockBadge={unlockBadge} />;
       case GameType.VOCAB:
         return <VocabIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); unlockBadge('vocab_master'); updateQuestProgress('vocab'); updateMastery(GameType.VOCAB, 5); }} onWordLearned={addLearnedWord} />;
       case GameType.CHAT:
-        return <ChatIsland onBack={back} points={points} streak={streak} addPoints={(amt, r) => { addPoints(amt, r); updateQuestProgress('chat'); updateMastery(GameType.CHAT, 2); }} />;
+        return <ChatIsland onBack={back} points={points} streak={streak} addPoints={(amt, r) => { addPoints(amt, r); updateQuestProgress('chat'); updateMastery(GameType.CHAT, 2); }} avatar={profile.avatar} />;
       case GameType.IMAGE_QUEST:
         return <QuestIsland onBack={back} addPoints={(amt, r) => { 
           addPoints(amt, r); 
@@ -318,10 +366,16 @@ const App: React.FC = () => {
         return <MimicIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.MIMIC, 10); }} />;
       case GameType.SCAVENGER:
         return <ScavengerIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateQuestProgress('scavenger'); updateMastery(GameType.SCAVENGER, 15); }} onSave={(entry) => addToJournal(entry)} />;
+      case GameType.SIMON_SAYS:
+        return <SimonSaysIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.SIMON_SAYS, 10); }} />;
+      case GameType.I_SPY:
+        return <ISpyIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.I_SPY, 15); }} />;
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
             <IslandCard title="Tracing Trails" subtitle="Jejak Huruf" icon="✍️" color="bg-cyan-500" description="Follow the magic dots to draw letters!" onClick={() => setActiveIsland(GameType.TRACING)} mastery={getMasteryLevel(mastery[GameType.TRACING])} />
+            <IslandCard title="Simon Says" subtitle="Toby Berkata" icon="📢" color="bg-yellow-500" description="Follow Toby's commands and earn points!" onClick={() => setActiveIsland(GameType.SIMON_SAYS)} mastery={getMasteryLevel(mastery[GameType.SIMON_SAYS])} />
+            <IslandCard title="Mystery Eye" subtitle="Mata Misteri" icon="👁️" color="bg-emerald-500" description="Solve riddles to find hidden items!" onClick={() => setActiveIsland(GameType.I_SPY)} mastery={getMasteryLevel(mastery[GameType.I_SPY])} />
             <IslandCard title="Mystery of Grammarton" subtitle="Misteri Grammarton" icon="🦉" color="bg-indigo-600" description="Roleplay with the Mayor to solve mysteries!" onClick={() => setActiveIsland(GameType.ROLEPLAY)} mastery={getMasteryLevel(mastery[GameType.ROLEPLAY])} />
             <IslandCard title="Echo Woods" subtitle="Hutan Gema" icon="👻" color="bg-teal-500" description="Mimic Toby's voice and unlock cool skins!" onClick={() => setActiveIsland(GameType.MIMIC)} mastery={getMasteryLevel(mastery[GameType.MIMIC])} />
             <IslandCard title="Scavenger Hunt" subtitle="Berburu Benda" icon="🎒" color="bg-amber-500" description="Find real objects around your home!" onClick={() => setActiveIsland(GameType.SCAVENGER)} mastery={getMasteryLevel(mastery[GameType.SCAVENGER])} />
@@ -337,6 +391,8 @@ const App: React.FC = () => {
         );
     }
   };
+
+  const pantryCount = (profile.learnedWords.length || 0) - (profile.eatenWords?.length || 0);
 
   return (
     <div className="min-h-screen pb-20 relative overflow-hidden bg-sky-50 flex flex-col">
@@ -357,23 +413,34 @@ const App: React.FC = () => {
       />
       
       <main className="flex-1 relative z-10">
+        {!profile.tutorialComplete && (
+          <TutorialOverlay onComplete={completeTutorial} userName={profile.name} />
+        )}
+
         {!activeIsland && (
           <div className="text-center mt-12 px-4 flex flex-col items-center">
-             {/* Wordy the Pet */}
+             {/* Wordy the Pet Home Preview */}
             <div className="mb-6 group cursor-pointer" onClick={() => setActiveIsland(GameType.PET)}>
               <div className="relative inline-block">
-                <div className="text-8xl animate-character-breathe drop-shadow-lg group-hover:scale-110 transition-transform">
-                  {getPetEmoji()}
+                <div className={`text-8xl animate-character-breathe drop-shadow-lg group-hover:scale-110 transition-transform ${pantryCount === 0 ? 'grayscale opacity-60' : ''}`}>
+                  <span className="animate-character-blink block">{getPetEmoji()}</span>
                 </div>
                 <div className="absolute -top-4 -right-4 bg-white px-3 py-1 rounded-full text-xs font-black text-blue-600 shadow-md border-2 border-blue-100">
                   WORDY
                 </div>
-                {profile.learnedWords.length > 0 && points < 5000 && (
-                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black animate-pulse">FEED ME! 🥯</div>
+                {pantryCount > 0 && (
+                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black animate-pulse whitespace-nowrap">
+                     FEED ME {pantryCount} WORDS! 🥯
+                   </div>
+                )}
+                {pantryCount === 0 && profile.learnedWords.length > 0 && (
+                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-400 text-white text-[8px] px-2 py-0.5 rounded-full font-black whitespace-nowrap">
+                     I'M SLEEPY... 💤
+                   </div>
                 )}
               </div>
               <div className="mt-2 text-sm font-black text-blue-900/40 uppercase tracking-widest">
-                {points < 500 ? "Evolving soon..." : points < 2500 ? "Growing strong!" : "Dragon Master!"}
+                {points < 500 ? "Egg Stage" : points < 2500 ? "Growing Strong!" : points < 5000 ? "Junior Dragon" : "Ancient Master!"}
               </div>
             </div>
 
@@ -405,59 +472,157 @@ const App: React.FC = () => {
         {renderIsland()}
       </main>
 
-      {/* Explorer Passport Modal */}
+      {/* Streak Splash Modal */}
+      {showStreakSplash && (
+        <div 
+          className="fixed inset-0 z-[200] bg-orange-600/30 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-500"
+          onClick={() => setShowStreakSplash(false)}
+        >
+          <div className="bg-white p-12 rounded-[50px] shadow-2xl border-[10px] border-orange-400 text-center animate-level-up-pop max-w-sm">
+            <div className="text-9xl mb-6 animate-bounce">🔥</div>
+            <h2 className="text-4xl font-black text-orange-600 mb-2">{streak} DAY STREAK!</h2>
+            <p className="text-xl font-bold text-gray-500 mb-8 italic">"You are on fire! Teruslah belajar!"</p>
+            <div className="bg-orange-50 p-6 rounded-3xl mb-8 border-2 border-orange-100">
+               <div className="text-xs font-black text-orange-400 uppercase tracking-widest mb-1">Today's Streak Bonus:</div>
+               <div className="text-3xl font-black text-orange-600">+{streak * 25 + 50} ⭐</div>
+            </div>
+            <button onClick={() => setShowStreakSplash(false)} className="w-full bg-orange-600 text-white py-5 rounded-3xl font-black text-2xl shadow-lg hover:bg-orange-700 active:scale-95 transition-all">LET'S PLAY! 🚀</button>
+          </div>
+        </div>
+      )}
+
+      {/* Explorer Passport Modal (Profile Page) */}
       {showProfileModal && (
         <div 
           className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowProfileModal(false)}
         >
           <div 
-            className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 border-[12px] border-blue-500 relative"
+            className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 border-[12px] border-blue-500 relative flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-             <div className="bg-blue-500 p-6 text-white text-center">
+             <div className="bg-blue-500 p-6 text-white text-center relative">
                 <h2 className="text-2xl font-black uppercase tracking-widest">Explorer Passport 🚢</h2>
                 <p className="text-xs opacity-80">Paspor Penjelajah</p>
-             </div>
-             <div className="p-8 flex flex-col items-center text-center">
-                <div className="w-32 h-32 bg-sky-100 rounded-full flex items-center justify-center text-7xl mb-4 border-4 border-blue-100 shadow-inner animate-character-breathe">
-                  <span className="animate-character-blink block">{profile.avatar}</span>
-                </div>
-                <h3 className="text-3xl font-black text-blue-600">{profile.name}</h3>
-                <div className="mt-2 bg-orange-100 text-orange-600 px-4 py-1 rounded-full font-black text-sm uppercase">
-                  {currentRank}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 w-full mt-8">
-                  <div className="bg-gray-50 p-4 rounded-3xl">
-                    <div className="text-2xl font-black text-blue-500">{points}</div>
-                    <div className="text-[10px] text-gray-400 font-bold uppercase">Points Earned</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-3xl">
-                    <div className="text-2xl font-black text-orange-500">{streak}</div>
-                    <div className="text-[10px] text-gray-400 font-bold uppercase">Day Streak</div>
-                  </div>
-                </div>
-
-                <div className="w-full mt-6 text-left space-y-2">
-                  <div className="text-[10px] font-black text-gray-400 uppercase">Mastery Overview</div>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(mastery).map(([key, val]) => (
-                      <div key={key} className="bg-blue-50 px-2 py-1 rounded-lg text-[10px] font-bold text-blue-600">
-                        {key.replace('_', ' ')}: {val}%
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <button 
-                  onClick={() => setShowProfileModal(false)}
-                  className="mt-8 w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
+                  onClick={() => setShowProfileModal(false)} 
+                  className="absolute top-4 right-4 text-white hover:scale-125 transition-all text-2xl"
                 >
-                  CONTINUE ADVENTURE! 🚀
+                  ✕
                 </button>
              </div>
-             <button onClick={() => setShowProfileModal(false)} className="absolute top-4 right-4 text-white hover:scale-125 transition-all">✕</button>
+             
+             <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+                <div className="flex flex-col items-center text-center">
+                    {isEditingProfile ? (
+                        <div className="w-full space-y-6 animate-in fade-in duration-300">
+                             <div className="grid grid-cols-4 gap-3">
+                                {AVATARS.map(a => (
+                                    <button
+                                        key={a.emoji}
+                                        onClick={() => setEditAvatar(a.emoji)}
+                                        className={`p-3 rounded-2xl border-4 transition-all ${editAvatar === a.emoji ? 'bg-blue-500 border-blue-600 scale-105' : 'bg-gray-50 border-gray-100 grayscale'}`}
+                                    >
+                                        <span className="text-3xl">{a.emoji}</span>
+                                    </button>
+                                ))}
+                             </div>
+                             <input 
+                                type="text"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="w-full p-4 bg-gray-50 rounded-2xl text-xl font-black text-blue-600 outline-none border-4 border-blue-100 focus:border-blue-400 text-center"
+                                placeholder="Change your name..."
+                             />
+                             <div className="flex gap-4">
+                                <button onClick={() => setIsEditingProfile(false)} className="flex-1 bg-gray-100 py-4 rounded-2xl font-black text-gray-400">CANCEL</button>
+                                <button onClick={handleUpdateProfile} className="flex-2 bg-green-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">SAVE CHANGES! ✅</button>
+                             </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="relative group">
+                                <div className="w-32 h-32 bg-sky-100 rounded-full flex items-center justify-center text-7xl mb-4 border-4 border-blue-100 shadow-inner animate-character-breathe">
+                                    <span className="animate-character-blink block">{profile.avatar}</span>
+                                </div>
+                                <button 
+                                    onClick={startEditMode}
+                                    className="absolute bottom-4 right-0 bg-blue-600 text-white w-10 h-10 rounded-full border-4 border-white flex items-center justify-center text-sm shadow-lg hover:scale-110 transition-transform"
+                                >
+                                    ✏️
+                                </button>
+                            </div>
+                            <h3 className="text-3xl font-black text-blue-600">{profile.name}</h3>
+                            <div className="mt-2 bg-orange-100 text-orange-600 px-4 py-1 rounded-full font-black text-sm uppercase">
+                                {currentRank}
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4 w-full mt-8">
+                                <div className="bg-gray-50 p-4 rounded-3xl">
+                                    <div className="text-2xl font-black text-blue-500">{points}</div>
+                                    <div className="text-[9px] text-gray-400 font-bold uppercase">Points ⭐</div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-3xl">
+                                    <div className="text-2xl font-black text-orange-500">{streak}</div>
+                                    <div className="text-[9px] text-gray-400 font-bold uppercase">Streak 🔥</div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-3xl">
+                                    <div className="text-2xl font-black text-purple-500">{profile.learnedWords.length}</div>
+                                    <div className="text-[9px] text-gray-400 font-bold uppercase">Words 📚</div>
+                                </div>
+                            </div>
+
+                            <div className="w-full mt-10 text-left">
+                                <h4 className="text-xs font-black text-gray-400 uppercase mb-4 flex items-center gap-2">
+                                    <span>My Word Collection</span>
+                                    <div className="h-px bg-gray-100 flex-1"></div>
+                                </h4>
+                                {profile.learnedWords.length === 0 ? (
+                                    <p className="text-gray-300 italic text-sm text-center py-6">Visit Vocab Island to start your collection!</p>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        {profile.learnedWords.map(word => (
+                                            <div 
+                                                key={word} 
+                                                className="bg-blue-50 px-4 py-2 rounded-2xl text-sm font-bold text-blue-600 border border-blue-100 shadow-sm animate-in zoom-in duration-300"
+                                            >
+                                                {word}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="w-full mt-10 text-left">
+                                <h4 className="text-xs font-black text-gray-400 uppercase mb-4 flex items-center gap-2">
+                                    <span>Mastery Overview</span>
+                                    <div className="h-px bg-gray-100 flex-1"></div>
+                                </h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {Object.entries(mastery).map(([key, val]) => (
+                                        <div key={key} className="bg-gray-50 p-3 rounded-2xl flex items-center justify-between">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase">{key.replace('_', ' ')}</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-blue-500" style={{ width: `${val}%` }}></div>
+                                                </div>
+                                                <span className="text-[10px] font-black text-blue-600">{val}%</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={() => setShowProfileModal(false)}
+                                className="mt-10 w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
+                            >
+                                BACK TO ADVENTURE! 🚀
+                            </button>
+                        </>
+                    )}
+                </div>
+             </div>
           </div>
         </div>
       )}
@@ -646,6 +811,8 @@ const App: React.FC = () => {
           50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
         }
         .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );
@@ -663,14 +830,20 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
       avatar,
       title: 'Little Scout',
       joinedDate: new Date().toISOString(),
-      learnedWords: []
+      learnedWords: [],
+      eatenWords: [],
+      tutorialComplete: false
     });
   };
 
   return (
     <div className="min-h-screen bg-blue-50 flex items-center justify-center p-6 font-['Quicksand'] relative overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20 flex flex-wrap gap-20 p-10 pointer-events-none">
-        {AVATARS.map((a, i) => <span key={i} className="text-8xl animate-character-breathe" style={{ animationDelay: `${i * 0.5}s` }}>{a.emoji}</span>)}
+        {AVATARS.map((a, i) => (
+          <span key={i} className="text-8xl animate-character-breathe" style={{ animationDelay: `${i * 0.5}s` }}>
+            <span className="animate-character-blink block">{a.emoji}</span>
+          </span>
+        ))}
       </div>
       
       <div className="bg-white w-full max-w-lg rounded-[50px] shadow-2xl p-10 text-center relative z-10 border-8 border-white">
@@ -706,7 +879,9 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
                   onClick={() => setAvatar(a.emoji)}
                   className={`aspect-square rounded-2xl flex flex-col items-center justify-center border-4 transition-all ${avatar === a.emoji ? 'bg-blue-500 border-blue-600 scale-110 shadow-lg' : 'bg-gray-50 border-gray-100 grayscale hover:grayscale-0'}`}
                 >
-                  <span className="text-4xl">{a.emoji}</span>
+                  <span className="text-4xl animate-character-breathe">
+                    <span className="animate-character-blink block">{a.emoji}</span>
+                  </span>
                   <span className={`text-[8px] font-bold mt-1 ${avatar === a.emoji ? 'text-white' : 'text-gray-400'}`}>{a.name}</span>
                 </button>
               ))}

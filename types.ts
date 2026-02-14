@@ -12,15 +12,16 @@ export enum GameType {
   MIMIC = 'MIMIC',
   SCAVENGER = 'SCAVENGER',
   PET = 'PET',
-  TRACING = 'TRACING'
+  TRACING = 'TRACING',
+  SIMON_SAYS = 'SIMON_SAYS',
+  I_SPY = 'I_SPY'
 }
 
 export interface PetState {
   name: string;
   stage: 'egg' | 'baby' | 'junior' | 'master';
-  lastFed: string;
-  evolutionProgress: number;
-  favoriteFood?: string;
+  happiness: number;
+  lastInteraction: string;
 }
 
 export interface Flashcard {
@@ -81,6 +82,8 @@ export interface UserProfile {
   joinedDate: string;
   petName?: string;
   learnedWords: string[];
+  eatenWords: string[]; 
+  tutorialComplete: boolean;
 }
 
 export interface JournalEntry {

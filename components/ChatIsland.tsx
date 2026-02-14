@@ -8,9 +8,10 @@ interface ChatIslandProps {
   points: number;
   streak: number;
   addPoints: (amount: number, reason: string) => void;
+  avatar: string;
 }
 
-const ChatIsland: React.FC<ChatIslandProps> = ({ onBack, points, streak, addPoints }) => {
+const ChatIsland: React.FC<ChatIslandProps> = ({ onBack, points, streak, addPoints, avatar }) => {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'model', text: "Hello! Halo! I am Toby. How are you today? Kamu apa kabar?" }
   ]);
@@ -109,7 +110,9 @@ const ChatIsland: React.FC<ChatIslandProps> = ({ onBack, points, streak, addPoin
         {tipData && tipData.length >= 3 && (
           <div className="mt-2 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 shadow-sm animate-in zoom-in duration-300">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">🐾</span>
+              <span className="text-xl animate-character-breathe">
+                <span className="animate-character-blink block">🐾</span>
+              </span>
               <span className="text-xs font-black text-yellow-700 uppercase tracking-widest">Toby's Learning Tip</span>
             </div>
             <div className="space-y-2">
@@ -165,25 +168,42 @@ const ChatIsland: React.FC<ChatIslandProps> = ({ onBack, points, streak, addPoin
       <div className="relative z-10 flex flex-col h-full">
         <div className="flex items-center justify-between mb-4">
           <button onClick={onBack} className="text-blue-600 font-bold flex items-center gap-2 hover:translate-x-[-4px] transition-transform">⬅️ Back</button>
-          <button 
-            onClick={() => { setIsDancing(true); setTimeout(() => setIsDancing(false), 2000); }}
-            className="bg-orange-100 px-4 py-1 rounded-full text-orange-600 font-bold border-2 border-orange-200 relative group active:scale-95 transition-all"
-          >
-            {streak > 3 && <span className="absolute -top-4 -left-2 text-2xl animate-pulse">👑</span>}
-            Chat with Toby 🐻
-          </button>
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-2xl border-2 border-orange-200">
+                <span className="animate-character-breathe">
+                   <span className="animate-character-blink block">🐻</span>
+                </span>
+             </div>
+             <button 
+                onClick={() => { setIsDancing(true); setTimeout(() => setIsDancing(false), 2000); }}
+                className="bg-orange-100 px-4 py-1 rounded-full text-orange-600 font-bold border-2 border-orange-200 relative group active:scale-95 transition-all"
+              >
+                {streak > 3 && <span className="absolute -top-4 -left-2 text-2xl animate-pulse">👑</span>}
+                Chat with Toby
+              </button>
+          </div>
         </div>
 
         <div className={`flex-1 overflow-y-auto bg-white/90 backdrop-blur rounded-[40px] shadow-2xl p-6 mb-4 space-y-4 relative ${isMagic ? 'border-4 border-yellow-400' : 'border-4 border-orange-50'}`}>
           {isDancing && <div className="absolute inset-0 z-50 flex items-center justify-center text-6xl animate-bounce pointer-events-none">❤️ ❤️ ❤️</div>}
           {messages.map((msg, idx) => (
-            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] p-5 rounded-3xl text-lg leading-relaxed shadow-sm transition-all animate-in slide-in-from-bottom-2 relative group ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border-2 border-orange-100 text-gray-800 rounded-tl-none'}`}>
+            <div key={idx} className={`flex ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
+              <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center border shadow-sm ${msg.role === 'user' ? 'bg-blue-100' : 'bg-orange-100'}`}>
+                 <span className="animate-character-breathe">
+                    <span className="animate-character-blink block text-sm">{msg.role === 'user' ? avatar : '🐻'}</span>
+                 </span>
+              </div>
+              <div className={`max-w-[85%] p-5 rounded-3xl text-lg leading-relaxed shadow-sm transition-all animate-in slide-in-from-bottom-2 relative group ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border-2 border-orange-100 text-gray-800 rounded-tl-none'}`}>
                 {renderMessageContent(msg, idx)}
               </div>
             </div>
           ))}
-          {isTyping && <div className="flex justify-start animate-pulse p-4 text-orange-400 font-black italic">Toby is thinking... 🐻🍯</div>}
+          {isTyping && <div className="flex justify-start items-center gap-2 animate-pulse p-4 text-orange-400 font-black italic">
+             <span className="animate-character-breathe">
+                <span className="animate-character-blink block text-xl">🐻</span>
+             </span>
+             Toby is thinking... 🍯
+          </div>}
           <div ref={scrollRef} />
         </div>
 

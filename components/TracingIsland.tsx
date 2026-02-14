@@ -43,6 +43,20 @@ const LETTER_PATHS: Record<string, string> = {
 
 const HIT_THRESHOLD = 30; // pixels
 
+// Audio constants
+const SOUNDS = {
+  SUCCESS: 'https://cdn.pixabay.com/audio/2021/08/04/audio_bbd1399753.mp3',
+  RESET: 'https://cdn.pixabay.com/audio/2022/03/15/audio_73138b584d.mp3',
+  SAVE: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c8de313d42.mp3',
+  DOWNLOAD: 'https://cdn.pixabay.com/audio/2022/03/10/audio_50269f8842.mp3',
+};
+
+const playSound = (url: string) => {
+  const audio = new Audio(url);
+  audio.volume = 0.4;
+  audio.play().catch(e => console.log('Sound blocked:', e));
+};
+
 interface SampledPoint {
   x: number;
   y: number;
@@ -90,6 +104,7 @@ const TracingIsland: React.FC<TracingIslandProps> = ({ onBack, addPoints, onSave
 
   const handleComplete = () => {
     setIsCompleted(true);
+    playSound(SOUNDS.SUCCESS);
     playPronunciation(currentLetter);
     addPoints(20, `Excellent Tracing of ${currentLetter}! ✍️✨`);
     setTracedLettersCount(prev => {
@@ -129,6 +144,7 @@ const TracingIsland: React.FC<TracingIslandProps> = ({ onBack, addPoints, onSave
           data: tempCanvas.toDataURL('image/png')
       });
       setIsSaved(true);
+      playSound(SOUNDS.SAVE);
       addPoints(10, "Added to Scrapbook! 📓");
     }
   };
@@ -139,6 +155,7 @@ const TracingIsland: React.FC<TracingIslandProps> = ({ onBack, addPoints, onSave
     link.download = `tracing-${currentLetter}.png`;
     link.href = canvasRef.current.toDataURL();
     link.click();
+    playSound(SOUNDS.DOWNLOAD);
     addPoints(5, "Downloaded your letter! 💾");
   };
 
@@ -209,6 +226,7 @@ const TracingIsland: React.FC<TracingIslandProps> = ({ onBack, addPoints, onSave
   };
 
   const reset = () => {
+    if (progress > 0) playSound(SOUNDS.RESET);
     setIsCompleted(false);
     setIsSaved(false);
     setSampledPoints(prev => prev.map(p => ({ ...p, isHit: false })));

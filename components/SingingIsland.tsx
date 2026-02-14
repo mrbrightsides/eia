@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
 
 interface TimedLine {
   start: number;
@@ -81,6 +82,60 @@ const SONGS: Song[] = [
       { start: 18, text: "And a moo-moo there!" }
     ],
     icon: '🚜'
+  },
+  {
+    id: 'sheep',
+    title: 'Baa Baa Black Sheep',
+    idnTitle: 'Domba Hitam',
+    youtubeId: 'm_S6fM9y6uM',
+    lyrics: 'Baa baa black sheep, have you any wool? Yes sir, yes sir, three bags full.',
+    timedLyrics: [
+      { start: 0, text: "Baa, baa, black sheep," },
+      { start: 3, text: "Have you any wool?" },
+      { start: 6, text: "Yes sir, yes sir," },
+      { start: 9, text: "Three bags full!" },
+      { start: 12, text: "One for the master," },
+      { start: 15, text: "One for the dame," },
+      { start: 18, text: "And one for the little boy" },
+      { start: 21, text: "Who lives down the lane!" }
+    ],
+    icon: '🐑'
+  },
+  {
+    id: 'happy',
+    title: "If You're Happy and You Know It",
+    idnTitle: 'Kalau Kau Suka Hati',
+    youtubeId: '71hqRT9U0wg',
+    lyrics: "If you're happy and you know it, clap your hands.",
+    timedLyrics: [
+      { start: 5, text: "If you're happy and you know it," },
+      { start: 8, text: "Clap your hands! (Clap clap!)" },
+      { start: 12, text: "If you're happy and you know it," },
+      { start: 15, text: "Clap your hands! (Clap clap!)" },
+      { start: 19, text: "If you're happy and you know it," },
+      { start: 22, text: "And you really want to show it," },
+      { start: 25, text: "If you're happy and you know it," },
+      { start: 28, text: "Clap your hands! (Clap clap!)" }
+    ],
+    icon: '😊'
+  },
+  {
+    id: 'spider',
+    title: 'Itsy Bitsy Spider',
+    idnTitle: 'Laba-laba Kecil',
+    youtubeId: 'w_lCi8U49mY',
+    lyrics: 'The itsy bitsy spider climbed up the water spout.',
+    timedLyrics: [
+      { start: 0, text: "The itsy bitsy spider" },
+      { start: 3, text: "Climbed up the water spout." },
+      { start: 7, text: "Down came the rain" },
+      { start: 10, text: "And washed the spider out." },
+      { start: 14, text: "Out came the sun" },
+      { start: 17, text: "And dried up all the rain," },
+      { start: 21, text: "And the itsy bitsy spider" },
+      { start: 24, text: "Climbed up the spout again!" }
+    ],
+    icon: '🕷️'
   }
 ];
 
@@ -96,87 +151,33 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [feedback, setFeedback] = useState<{ rating: number; feedback: string; idnFeedback: string; tips: string[] } | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [playerTime, setPlayerTime] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const playerRef = useRef<any>(null);
-  const timeIntervalRef = useRef<number | null>(null);
 
+  const { error } = useYouTubePlayer({
+    videoId: selectedSong?.youtubeId || '',
+    containerId: 'song-player-container',
+    onTimeUpdate: (time) => setPlayerTime(time),
+    onError: (err) => setVideoError(err)
+  });
+
+  // Track current lyric index
+  const currentLineIndex = selectedSong?.timedLyrics.findIndex((line, i, arr) => {
+    const nextLine = arr[i + 1];
+    return playerTime >= line.start && (!nextLine || playerTime < nextLine.start);
+  }) ?? -1;
+
+  // Handle automatic scrolling of lyrics
   useEffect(() => {
-    if (selectedSong) {
-      setVideoError(null);
-      setCurrentTime(0);
-      // @ts-ignore
-      if (window.YT && window.YT.Player) {
-        initPlayer();
-      } else {
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-        // @ts-ignore
-        window.onYouTubeIframeAPIReady = () => initPlayer();
+    if (currentLineIndex !== -1) {
+      const el = document.getElementById(`lyric-line-${currentLineIndex}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-    return () => {
-      stopTimeTracking();
-      if (playerRef.current) {
-        playerRef.current.destroy();
-        playerRef.current = null;
-      }
-    };
-  }, [selectedSong]);
-
-  const startTimeTracking = () => {
-    stopTimeTracking();
-    timeIntervalRef.current = window.setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
-        setCurrentTime(playerRef.current.getCurrentTime());
-      }
-    }, 250);
-  };
-
-  const stopTimeTracking = () => {
-    if (timeIntervalRef.current) {
-      clearInterval(timeIntervalRef.current);
-      timeIntervalRef.current = null;
-    }
-  };
-
-  const initPlayer = () => {
-    if (!selectedSong) return;
-    try {
-      // @ts-ignore
-      playerRef.current = new window.YT.Player('song-player-container', {
-        videoId: selectedSong.youtubeId,
-        host: 'https://www.youtube-nocookie.com',
-        playerVars: {
-          'playsinline': 1,
-          'rel': 0,
-          'modestbranding': 1,
-          'origin': window.location.origin
-        },
-        events: {
-          'onStateChange': (event: any) => {
-            // @ts-ignore
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              startTimeTracking();
-            } else {
-              stopTimeTracking();
-            }
-          },
-          'onError': (event: any) => {
-            console.error("YouTube Player Error Code:", event.data);
-            setVideoError("Video restricted (Error 150/101/153)");
-          }
-        }
-      });
-    } catch (e) {
-      console.error("Failed to init YT player", e);
-      setVideoError("Player initialization failed.");
-    }
-  };
+  }, [currentLineIndex]);
 
   const startRecording = async () => {
     try {
@@ -266,12 +267,6 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
     }
   };
 
-  // Find index of current lyric for highlighting
-  const currentLineIndex = selectedSong?.timedLyrics.findIndex((line, i, arr) => {
-    const nextLine = arr[i + 1];
-    return currentTime >= line.start && (!nextLine || currentTime < nextLine.start);
-  });
-
   return (
     <div className="max-w-4xl mx-auto p-6 relative min-h-[70vh]">
       <button onClick={onBack} className="mb-6 text-rose-600 font-bold flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
@@ -304,7 +299,7 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
             <div className="aspect-video w-full bg-black flex items-center justify-center relative">
               <div id="song-player-container" className="w-full h-full"></div>
               
-              {videoError && (
+              {(videoError || error) && (
                 <div className="absolute inset-0 bg-gray-900/95 text-white p-8 flex flex-col items-center justify-center text-center z-20">
                   <span className="text-6xl mb-4">📺</span>
                   <h3 className="text-xl font-black mb-2">Watch Video on YouTube</h3>
@@ -316,40 +311,34 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
             </div>
           </div>
 
-          {/* Full Songbook View */}
-          <div className="w-full bg-white rounded-[40px] shadow-xl p-8 mb-10 border-4 border-rose-200 text-center animate-in slide-in-from-bottom-5 relative overflow-hidden">
-            {/* Background pattern for songbook feel */}
+          {/* Karaoke Lyrics Display */}
+          <div className="w-full bg-white rounded-[40px] shadow-xl p-4 mb-10 border-4 border-rose-200 text-center animate-in slide-in-from-bottom-5 relative overflow-hidden h-[300px]">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#e11d48_1px,transparent_1px)] [background-size:20px_20px]"></div>
             
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-rose-500 text-2xl">🎵</span>
-              <h3 className="text-2xl font-black text-rose-600 uppercase tracking-tight">Full Lyrics: {selectedSong.title}</h3>
-              <span className="text-rose-500 text-2xl">🎵</span>
-            </div>
-            
-            <div className="space-y-4 relative z-10">
-              {selectedSong.timedLyrics.map((line, i) => (
-                <div 
-                  key={i} 
-                  className={`py-2 px-4 rounded-2xl transition-all duration-500 transform ${
-                    currentLineIndex === i 
-                      ? 'bg-rose-500 text-white scale-105 shadow-lg ring-4 ring-rose-200 font-black text-2xl' 
-                      : 'text-gray-400 font-bold text-xl'
-                  }`}
-                >
-                  {line.text}
-                  {currentLineIndex === i && <span className="ml-2 animate-pulse">✨</span>}
-                </div>
-              ))}
-            </div>
+            <div className="space-y-4 relative z-10 h-full overflow-y-auto custom-scrollbar p-6" id="lyrics-scroll-container">
+              {selectedSong.timedLyrics.map((line, i) => {
+                const isPast = currentLineIndex !== -1 && i < currentLineIndex;
+                const isCurrent = currentLineIndex === i;
+                const isFuture = currentLineIndex !== -1 && i > currentLineIndex;
 
-            <div className="mt-8 pt-6 border-t border-rose-50 flex justify-center gap-2">
-               {selectedSong.timedLyrics.map((_, i) => (
-                 <div 
-                   key={i} 
-                   className={`h-2 rounded-full transition-all duration-500 ${currentLineIndex === i ? 'w-10 bg-rose-500' : 'w-2 bg-rose-100'}`}
-                 />
-               ))}
+                return (
+                  <div 
+                    key={i} 
+                    id={`lyric-line-${i}`}
+                    className={`py-4 px-6 rounded-3xl transition-all duration-700 transform flex items-center justify-center gap-4 ${
+                      isCurrent 
+                        ? 'bg-rose-500 text-white scale-105 shadow-[0_0_25px_rgba(225,29,72,0.5)] ring-4 ring-rose-200 font-black text-3xl' 
+                        : isPast 
+                          ? 'bg-green-50 text-green-500 scale-95 opacity-60 font-bold text-xl' 
+                          : 'text-gray-300 font-bold text-xl opacity-30'
+                    }`}
+                  >
+                    <span className="flex-1">{line.text}</span>
+                    {isPast && <span className="text-2xl animate-in zoom-in">✅</span>}
+                    {isCurrent && <span className="text-2xl animate-bounce">🎤</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -445,6 +434,19 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
           50% { transform: translateY(0); }
         }
         .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #fecdd3;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #fda4af;
+        }
       `}</style>
     </div>
   );

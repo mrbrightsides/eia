@@ -10,7 +10,10 @@ const CATEGORIES = [
   { id: 'hobbies', name: 'Hobbies', idn: 'Hobi', icon: '⚽' },
   { id: 'actions', name: 'Actions', idn: 'Tindakan', icon: '🏃' },
   { id: 'places', name: 'Places', idn: 'Tempat', icon: '🏘️' },
-  { id: 'feelings', name: 'Feelings', idn: 'Perasaan', icon: '😊' }
+  { id: 'feelings', name: 'Feelings', idn: 'Perasaan', icon: '😊' },
+  { id: 'body_parts', name: 'Body Parts', idn: 'Bagian Tubuh', icon: '👋' },
+  { id: 'transportation', name: 'Transportation', idn: 'Transportasi', icon: '🚁' },
+  { id: 'weather', name: 'Weather', idn: 'Cuaca', icon: '🌦️' }
 ];
 
 interface VocabIslandProps {
