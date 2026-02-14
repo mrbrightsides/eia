@@ -18,6 +18,39 @@ const callAiWithRetry = async (fn: (ai: GoogleGenAI) => Promise<any>, retries = 
   }
 };
 
+export const evaluateIntroduction = async (audioBlob: Blob, expectedTemplate: string): Promise<{ score: number, feedback: string, idnFeedback: string, recognizedText: string }> => {
+  return callAiWithRetry(async (ai) => {
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve) => {
+      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+      reader.readAsDataURL(audioBlob);
+    });
+    const base64Audio = await base64Promise;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { inlineData: { mimeType: audioBlob.type || 'audio/webm', data: base64Audio } },
+        { text: `The child is practicing a self-introduction phrase following this template: "${expectedTemplate}". Check their pronunciation and energy. Return JSON: { "score": 1-100, "feedback": "string", "idnFeedback": "string", "recognizedText": "string" }` }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            score: { type: Type.NUMBER },
+            feedback: { type: Type.STRING },
+            idnFeedback: { type: Type.STRING },
+            recognizedText: { type: Type.STRING }
+          },
+          required: ["score", "feedback", "idnFeedback", "recognizedText"]
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  });
+};
+
 export const getISpyScene = async (): Promise<{ prompt: string, riddle: string, answer: string, idnRiddle: string }> => {
   return callAiWithRetry(async (ai) => {
     const response = await ai.models.generateContent({

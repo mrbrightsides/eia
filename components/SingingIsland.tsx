@@ -136,6 +136,54 @@ const SONGS: Song[] = [
       { start: 24, text: "Climbed up the spout again!" }
     ],
     icon: '🕷️'
+  },
+  {
+    id: 'shark',
+    title: 'Baby Shark',
+    idnTitle: 'Bayi Hiu',
+    youtubeId: 'XqZsoesa55w',
+    lyrics: 'Baby shark, doo doo doo doo doo doo, Baby shark!',
+    timedLyrics: [
+      { start: 8, text: "Baby shark, doo doo doo doo doo doo" },
+      { start: 12, text: "Baby shark, doo doo doo doo doo doo" },
+      { start: 15, text: "Baby shark, doo doo doo doo doo doo" },
+      { start: 19, text: "Baby shark!" },
+      { start: 22, text: "Mommy shark, doo doo doo doo doo doo" },
+      { start: 26, text: "Mommy shark!" }
+    ],
+    icon: '🦈'
+  },
+  {
+    id: 'head',
+    title: 'Head, Shoulders, Knees and Toes',
+    idnTitle: 'Kepala Pundak Lutut Kaki',
+    youtubeId: 'QA48wTGbU7A',
+    lyrics: 'Head, shoulders, knees and toes, knees and toes.',
+    timedLyrics: [
+      { start: 0, text: "Head, shoulders, knees and toes," },
+      { start: 4, text: "Knees and toes." },
+      { start: 7, text: "Head, shoulders, knees and toes," },
+      { start: 11, text: "Knees and toes." },
+      { start: 14, text: "And eyes and ears and mouth and nose," },
+      { start: 18, text: "Head, shoulders, knees and toes!" }
+    ],
+    icon: '🧘'
+  },
+  {
+    id: 'boat',
+    title: 'Row, Row, Row Your Boat',
+    idnTitle: 'Kayuh Sampanmu',
+    youtubeId: '7otAJa3jui8',
+    lyrics: 'Row, row, row your boat, gently down the stream.',
+    timedLyrics: [
+      { start: 0, text: "Row, row, row your boat," },
+      { start: 3, text: "Gently down the stream." },
+      { start: 6, text: "Merrily, merrily, merrily, merrily," },
+      { start: 9, text: "Life is but a dream." },
+      { start: 12, text: "Row, row, row your boat," },
+      { start: 15, text: "Gently down the stream." }
+    ],
+    icon: '🛶'
   }
 ];
 
@@ -224,7 +272,7 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
     setIsAnalyzing(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
@@ -275,16 +323,18 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
 
       {!selectedSong ? (
         <div className="text-center">
-          <h2 className="text-4xl font-black text-rose-600 mb-2 animate-bounce-slow">Singing Stage! 🎤</h2>
+          <h2 className="text-4xl font-black text-rose-600 mb-2 animate-character-breathe inline-block">
+             <span className="animate-character-blink block">Singing Stage! 🎤</span>
+          </h2>
           <p className="text-gray-500 mb-8 italic">Choose a song and sing your heart out! (Pilih lagu dan bernyanyilah!)</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
             {SONGS.map(song => (
               <button
                 key={song.id}
                 onClick={() => setSelectedSong(song)}
-                className="bg-white p-8 rounded-[40px] shadow-xl hover:scale-105 transition-all border-b-8 border-rose-100 flex items-center gap-6"
+                className="bg-white p-8 rounded-[40px] shadow-xl hover:scale-105 transition-all border-b-8 border-rose-100 flex items-center gap-6 group"
               >
-                <div className="text-6xl">{song.icon}</div>
+                <div className="text-6xl group-hover:rotate-12 transition-transform">{song.icon}</div>
                 <div className="text-left">
                   <div className="font-black text-xl text-rose-600 leading-tight">{song.title}</div>
                   <div className="text-gray-400 font-bold text-sm">{song.idnTitle}</div>
@@ -429,11 +479,6 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
       )}
 
       <style>{`
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(-5%); }
-          50% { transform: translateY(0); }
-        }
-        .animate-bounce-slow { animation: bounce-slow 2s infinite; }
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }

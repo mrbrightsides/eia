@@ -14,7 +14,8 @@ export enum GameType {
   PET = 'PET',
   TRACING = 'TRACING',
   SIMON_SAYS = 'SIMON_SAYS',
-  I_SPY = 'I_SPY'
+  I_SPY = 'I_SPY',
+  GREETING = 'GREETING'
 }
 
 export interface PetState {
@@ -88,7 +89,7 @@ export interface UserProfile {
 
 export interface JournalEntry {
   id: string;
-  type: 'photo' | 'drawing' | 'movie' | 'tracing';
+  type: 'photo' | 'drawing' | 'movie' | 'tracing' | 'badge';
   english: string;
   indonesian: string;
   data: string; // base64 or URL

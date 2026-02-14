@@ -19,6 +19,7 @@ import TracingIsland from './components/TracingIsland';
 import SimonSaysIsland from './components/SimonSaysIsland';
 import ISpyIsland from './components/ISpyIsland';
 import TutorialOverlay from './components/TutorialOverlay';
+import GreetingIsland from './components/GreetingIsland';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
 const RANKS = ["Little Scout", "Junior Explorer", "Word Wizard", "Language Legend", "Island Master"];
@@ -101,7 +102,8 @@ const App: React.FC = () => {
       [GameType.PET]: 0,
       [GameType.TRACING]: 0,
       [GameType.SIMON_SAYS]: 0,
-      [GameType.I_SPY]: 0
+      [GameType.I_SPY]: 0,
+      [GameType.GREETING]: 0
     };
   });
 
@@ -333,6 +335,8 @@ const App: React.FC = () => {
   const renderIsland = () => {
     const back = () => setActiveIsland(null);
     switch (activeIsland) {
+      case GameType.GREETING:
+        return <GreetingIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.GREETING, 15); }} onSave={(entry) => addToJournal(entry)} profile={profile} />;
       case GameType.TRACING:
         return <TracingIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.TRACING, 10); }} onSave={(entry) => addToJournal(entry)} unlockBadge={() => unlockBadge('writer')} />;
       case GameType.PET:
@@ -373,6 +377,7 @@ const App: React.FC = () => {
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
+            <IslandCard title="Hello Hero" subtitle="Pahlawan Sapaan" icon="🦸‍♂️" color="bg-blue-600" description="Learn to introduce yourself to the world!" onClick={() => setActiveIsland(GameType.GREETING)} mastery={getMasteryLevel(mastery[GameType.GREETING])} />
             <IslandCard title="Tracing Trails" subtitle="Jejak Huruf" icon="✍️" color="bg-cyan-500" description="Follow the magic dots to draw letters!" onClick={() => setActiveIsland(GameType.TRACING)} mastery={getMasteryLevel(mastery[GameType.TRACING])} />
             <IslandCard title="Simon Says" subtitle="Toby Berkata" icon="📢" color="bg-yellow-500" description="Follow Toby's commands and earn points!" onClick={() => setActiveIsland(GameType.SIMON_SAYS)} mastery={getMasteryLevel(mastery[GameType.SIMON_SAYS])} />
             <IslandCard title="Mystery Eye" subtitle="Mata Misteri" icon="👁️" color="bg-emerald-500" description="Solve riddles to find hidden items!" onClick={() => setActiveIsland(GameType.I_SPY)} mastery={getMasteryLevel(mastery[GameType.I_SPY])} />
@@ -659,7 +664,7 @@ const App: React.FC = () => {
                             <img src={entry.data} alt={entry.english} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           )}
                           <div className="absolute top-2 right-2 bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                            {entry.type === 'photo' ? '📷 PHOTO' : entry.type === 'movie' ? '🎬 MOVIE' : entry.type === 'tracing' ? '✍️ TRACING' : '🎨 DRAWING'}
+                            {entry.type === 'photo' ? '📷 PHOTO' : entry.type === 'movie' ? '🎬 MOVIE' : entry.type === 'tracing' ? '✍️ TRACING' : entry.type === 'badge' ? '🥇 BADGE' : '🎨 DRAWING'}
                           </div>
                         </div>
                         <div className="text-center">
