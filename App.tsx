@@ -252,7 +252,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const audio = new Audio("https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3");
+    const audio = new Audio("https://stiff-green-pcrw113jh1.edgeone.app/Curious%20Little%20Footsteps.mp3");
     audio.loop = true;
     audio.volume = 0.2;
     audio.muted = isMuted;
