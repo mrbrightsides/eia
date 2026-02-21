@@ -20,6 +20,7 @@ import SimonSaysIsland from './components/SimonSaysIsland';
 import ISpyIsland from './components/ISpyIsland';
 import TutorialOverlay from './components/TutorialOverlay';
 import GreetingIsland from './components/GreetingIsland';
+import WisdomIsland from './components/WisdomIsland';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
 const RANKS = ["Little Scout", "Junior Explorer", "Word Wizard", "Language Legend", "Island Master"];
@@ -103,7 +104,8 @@ const App: React.FC = () => {
       [GameType.TRACING]: 0,
       [GameType.SIMON_SAYS]: 0,
       [GameType.I_SPY]: 0,
-      [GameType.GREETING]: 0
+      [GameType.GREETING]: 0,
+      [GameType.WISDOM]: 0
     };
   });
 
@@ -374,6 +376,8 @@ const App: React.FC = () => {
         return <SimonSaysIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.SIMON_SAYS, 10); }} />;
       case GameType.I_SPY:
         return <ISpyIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.I_SPY, 15); }} />;
+      case GameType.WISDOM:
+        return <WisdomIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.WISDOM, 10); }} onSave={(entry) => addToJournal(entry)} />;
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
@@ -391,6 +395,7 @@ const App: React.FC = () => {
             <IslandCard title="Chat Buddy" subtitle="Teman Bicara" icon="🐻" color="bg-orange-400" description="Talk to Toby the Bear in English!" onClick={() => setActiveIsland(GameType.CHAT)} mastery={getMasteryLevel(mastery[GameType.CHAT])} />
             <IslandCard title="Image Quest" subtitle="Misi Gambar" icon="🎨" color="bg-blue-400" description="Draw things with your words!" onClick={() => setActiveIsland(GameType.IMAGE_QUEST)} mastery={getMasteryLevel(mastery[GameType.IMAGE_QUEST])} />
             <IslandCard title="Magic Lens" subtitle="Lensa Ajaib" icon="🔍" color="bg-green-400" description="Discover English words around you!" onClick={() => setActiveIsland(GameType.CAMERA_QUEST)} mastery={getMasteryLevel(mastery[GameType.CAMERA_QUEST])} />
+            <IslandCard title="Wisdom Island" subtitle="Pulau Bijak" icon="🕌" color="bg-emerald-600" description="Learn Islamic terms and wisdom in English!" onClick={() => setActiveIsland(GameType.WISDOM)} mastery={getMasteryLevel(mastery[GameType.WISDOM])} />
             <IslandCard title="Word Scramble" subtitle="Kata Acak" icon="🌪️" color="bg-red-400" description="Unscramble letters to find the word!" onClick={() => setActiveIsland(GameType.SCRAMBLE)} mastery={getMasteryLevel(mastery[GameType.SCRAMBLE])} />
           </div>
         );

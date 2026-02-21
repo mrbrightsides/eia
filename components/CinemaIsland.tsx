@@ -122,7 +122,7 @@ const CinemaIsland: React.FC<CinemaIslandProps> = ({ onBack, addPoints, onSave }
         retries++;
       }
 
-      if (operation.error && operation.error.message?.includes("Requested entity was not found")) {
+      if (operation.error && (operation.error.message as string)?.includes("Requested entity was not found")) {
         setHasKey(false);
         setStep(0);
         throw new Error("API Key session expired.");
