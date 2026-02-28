@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile } from '../types';
 import { playPronunciation, startChatSession } from '../services/geminiService';
 
@@ -21,6 +22,12 @@ const STAGES = [
 
 const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile, addPoints, updateMastery, unlockBadge }) => {
   const [eating, setEating] = useState(false);
+  const [petting, setPetting] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [happiness, setHappiness] = useState(() => {
+    const saved = localStorage.getItem('petHappiness');
+    return saved ? parseInt(saved, 10) : 50;
+  });
   const [petDialogue, setPetDialogue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEvolution, setShowEvolution] = useState(false);
@@ -42,14 +49,20 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
     chatRef.current = startChatSession(
       `You are Wordy, the user's magical pet ${currentStage.name}. ` +
       `User Points: ${points}. Stage: ${currentStage.id}. ` +
+      `Happiness: ${happiness}%. ` +
       `Words in pantry: ${pantryWords.length}. ` +
       `If words > 0, you are hungry and excited! Ask for food in cute English/Indonesian. ` +
       `If words == 0, you are sleepy and want the user to learn more words on Vocab Island. ` +
+      `If happiness is high, you are super energetic! If low, you are a bit sad and want pets. ` +
       `Keep it very short (1 sentence) and super cute.`
     );
     
     getInitialGreeting();
   }, [currentStage.id]);
+
+  useEffect(() => {
+    localStorage.setItem('petHappiness', happiness.toString());
+  }, [happiness]);
 
   const getInitialGreeting = async () => {
     setIsTyping(true);
@@ -88,6 +101,44 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
     setTimeout(() => {
       setEating(false);
     }, 2000);
+  };
+
+  const handlePet = async () => {
+    if (petting || eating) return;
+    setPetting(true);
+    setHappiness(prev => Math.min(prev + 10, 100));
+    
+    addPoints(5, "Wordy loved the pets! ❤️");
+    
+    try {
+      const resp = await chatRef.current.sendMessage({ message: "I'm being petted! I love it!" });
+      setPetDialogue(resp.text);
+    } catch (e) {
+      setPetDialogue("That feels so good! Purrr... ✨");
+    }
+
+    setTimeout(() => {
+      setPetting(false);
+    }, 1000);
+  };
+
+  const handlePlay = async () => {
+    if (playing || eating || petting) return;
+    setPlaying(true);
+    setHappiness(prev => Math.min(prev + 15, 100));
+    
+    addPoints(10, "Wordy had so much fun playing! ⚽");
+    
+    try {
+      const resp = await chatRef.current.sendMessage({ message: "We are playing a game! I'm jumping for joy!" });
+      setPetDialogue(resp.text);
+    } catch (e) {
+      setPetDialogue("Wheee! This is fun! 🌈");
+    }
+
+    setTimeout(() => {
+      setPlaying(false);
+    }, 1500);
   };
 
   const progressToNext = nextStage 
@@ -130,19 +181,86 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
           </div>
 
           <div className="mb-12 relative group">
-            <div className={`text-[180px] leading-none transition-all duration-700 select-none ${eating ? 'scale-125 rotate-12' : 'animate-character-breathe hover:scale-110'}`}>
-               <span className="animate-character-blink block drop-shadow-2xl">{currentStage.emoji}</span>
-            </div>
-            {eating && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-7xl animate-ping-once">🥯</span>
-              </div>
-            )}
-            {pantryWords.length === 0 && (
+            <motion.div 
+              onClick={handlePet}
+              animate={petting ? {
+                scale: [1, 1.2, 1.1],
+                rotate: [0, 10, -10, 0],
+              } : eating ? {
+                scale: [1, 1.25, 1],
+                rotate: [0, 12, 0],
+              } : playing ? {
+                y: [0, -50, 0, -30, 0],
+                rotate: [0, 0, 360, 360, 360],
+              } : {
+                y: [0, -10, 0],
+              }}
+              transition={petting || eating || playing ? { duration: playing ? 1.5 : 0.5 } : {
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className={`text-[180px] leading-none transition-all duration-700 select-none cursor-pointer drop-shadow-2xl`}
+            >
+               <span className="animate-character-blink block">{currentStage.emoji}</span>
+            </motion.div>
+            
+            <AnimatePresence>
+              {petting && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0, y: 0 }}
+                  animate={{ opacity: 1, scale: 1.5, y: -100 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <span className="text-6xl">❤️</span>
+                </motion.div>
+              )}
+              {eating && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 2 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <span className="text-7xl">🥯</span>
+                </motion.div>
+              )}
+              {playing && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1.5, rotate: 360 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                >
+                  <span className="text-6xl">⚽</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {pantryWords.length === 0 && !petting && !eating && (
                <div className="absolute -top-4 right-1/4 bg-white p-3 rounded-2xl shadow-lg border-2 border-gray-100 animate-bounce">
                   <span className="text-2xl">💤</span>
                </div>
             )}
+            
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest whitespace-nowrap">
+              Click to pet Wordy!
+            </div>
+          </div>
+
+          <div className="w-full mb-6">
+             <div className="flex justify-between items-end mb-1">
+                <div className="text-[10px] font-black text-gray-400 uppercase">Happiness</div>
+                <div className="text-xs font-black text-rose-500">{happiness}%</div>
+             </div>
+             <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-50">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${happiness}%` }}
+                  className="h-full bg-gradient-to-r from-rose-400 to-pink-500"
+                />
+             </div>
           </div>
 
           <div className="relative mb-10 min-h-[100px] flex items-center justify-center">
@@ -167,6 +285,24 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
                 <div className="text-left">
                    <div className="text-[10px] font-black text-gray-400 uppercase">Growth Progress</div>
                    <div className="text-lg font-black text-sky-600">{Math.round(progressToNext)}%</div>
+                </div>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={handlePet}
+                    disabled={petting || eating || playing}
+                    className="bg-rose-100 p-3 rounded-2xl border-2 border-rose-200 text-rose-600 hover:bg-rose-500 hover:text-white transition-all active:scale-90 shadow-sm"
+                    title="Pet Wordy"
+                  >
+                    👋
+                  </button>
+                  <button 
+                    onClick={handlePlay}
+                    disabled={petting || eating || playing}
+                    className="bg-amber-100 p-3 rounded-2xl border-2 border-amber-200 text-amber-600 hover:bg-amber-500 hover:text-white transition-all active:scale-90 shadow-sm"
+                    title="Play with Wordy"
+                  >
+                    ⚽
+                  </button>
                 </div>
                 {nextStage && (
                   <div className="text-right">
@@ -198,9 +334,9 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
                     </button>
                  </div>
                ) : (
-                 pantryWords.map(word => (
+                 pantryWords.map((word, i) => (
                    <button 
-                     key={word}
+                     key={`${word}-${i}`}
                      onClick={() => feedWord(word)}
                      disabled={eating}
                      className="bg-white px-6 py-3 rounded-2xl border-2 border-sky-100 font-black text-sky-600 hover:bg-sky-600 hover:text-white hover:border-sky-600 transition-all active:scale-90 shadow-md group relative overflow-hidden"

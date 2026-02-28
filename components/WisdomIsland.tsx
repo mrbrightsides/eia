@@ -118,19 +118,63 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfcf0] p-6 pb-24">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#062c2b] p-6 pb-24 relative overflow-hidden">
+      {/* Background Floating Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ 
+              x: Math.random() * 100 + "%", 
+              y: Math.random() * 100 + "%",
+              opacity: 0.1 + Math.random() * 0.3,
+              scale: 0.5 + Math.random() * 0.5
+            }}
+            animate={{ 
+              y: [null, "-20px", "20px", "0px"],
+              x: [null, "10px", "-10px", "0px"],
+              rotate: [0, 10, -10, 0]
+            }}
+            transition={{ 
+              duration: 5 + Math.random() * 5, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: Math.random() * 5
+            }}
+            className="absolute text-2xl"
+          >
+            {i % 3 === 0 ? "🌙" : i % 3 === 1 ? "⭐" : "✨"}
+          </motion.div>
+        ))}
+        {/* Large Decorative Moons */}
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-20 -right-20 text-[200px] opacity-5 text-emerald-100"
+        >
+          🌙
+        </motion.div>
+        <motion.div 
+          animate={{ rotate: -360 }}
+          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-20 -left-20 text-[250px] opacity-5 text-emerald-100"
+        >
+          🌙
+        </motion.div>
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button 
             onClick={view === 'menu' ? onBack : () => setView('menu')}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-stone-200 text-stone-600 hover:scale-105 transition-all"
+            className="bg-white/10 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-white/20 text-emerald-50 hover:scale-105 transition-all"
           >
             {view === 'menu' ? '⬅️ Back to Map' : '⬅️ Back to Wisdom Menu'}
           </button>
           <div className="text-right">
-            <h1 className="text-3xl font-black text-stone-800">Wisdom Island 🕌</h1>
-            <p className="text-stone-500 font-bold italic">Pulau Kebijaksanaan</p>
+            <h1 className="text-3xl font-black text-emerald-50">Wisdom Island 🕌</h1>
+            <p className="text-emerald-300/60 font-bold italic">Pulau Kebijaksanaan</p>
           </div>
         </div>
 
@@ -147,21 +191,21 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                 title="Word Gallery" 
                 subtitle="Galeri Kata" 
                 icon="📚" 
-                color="bg-emerald-500"
+                color="bg-emerald-600"
                 onClick={() => setView('vocab')}
               />
               <MenuCard 
                 title="Dzikr Garden" 
                 subtitle="Taman Dzikir" 
                 icon="📿" 
-                color="bg-blue-500"
+                color="bg-teal-600"
                 onClick={() => setView('dzikr')}
               />
               <MenuCard 
                 title="Wisdom Quiz" 
                 subtitle="Kuis Bijak" 
                 icon="🧠" 
-                color="bg-amber-500"
+                color="bg-amber-600"
                 onClick={() => setView('quiz')}
               />
             </motion.div>
@@ -179,11 +223,11 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                   <button
                     key={term.english}
                     onClick={() => setSelectedTerm(term)}
-                    className="bg-white p-6 rounded-3xl shadow-sm border-2 border-stone-100 hover:border-emerald-300 hover:scale-105 transition-all flex flex-col items-center text-center"
+                    className="bg-white/5 backdrop-blur-sm p-6 rounded-3xl shadow-sm border-2 border-white/10 hover:border-emerald-400 hover:bg-white/10 hover:scale-105 transition-all flex flex-col items-center text-center"
                   >
                     <span className="text-5xl mb-3">{term.icon}</span>
-                    <span className="font-black text-stone-800 text-lg">{term.english}</span>
-                    <span className="text-xs text-stone-400 font-bold uppercase">{term.indonesian}</span>
+                    <span className="font-black text-emerald-50 text-lg">{term.english}</span>
+                    <span className="text-xs text-emerald-300/60 font-bold uppercase">{term.indonesian}</span>
                   </button>
                 ))}
               </div>
@@ -192,38 +236,38 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white p-8 rounded-[40px] shadow-xl border-4 border-emerald-100 relative overflow-hidden"
+                  className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] shadow-xl border-4 border-emerald-500/30 relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">
+                  <div className="absolute top-0 right-0 p-8 opacity-5 text-9xl">
                     {selectedTerm.icon}
                   </div>
                   <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-4">
                       <span className="text-4xl">{selectedTerm.icon}</span>
                       <div>
-                        <h2 className="text-4xl font-black text-emerald-600 uppercase">{selectedTerm.english}</h2>
-                        <p className="text-stone-400 font-bold italic">Artinya: {selectedTerm.indonesian}</p>
+                        <h2 className="text-4xl font-black text-emerald-400 uppercase">{selectedTerm.english}</h2>
+                        <p className="text-emerald-200/60 font-bold italic">Artinya: {selectedTerm.indonesian}</p>
                       </div>
                     </div>
-                    <p className="text-xl text-stone-700 leading-relaxed mb-6 font-medium">
+                    <p className="text-xl text-emerald-50/90 leading-relaxed mb-6 font-medium">
                       {selectedTerm.description}
                     </p>
-                    <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                      <p className="text-emerald-800 font-bold italic">
+                    <div className="bg-emerald-900/40 p-4 rounded-2xl border border-emerald-500/20">
+                      <p className="text-emerald-200 font-bold italic">
                         💡 Fun Fact: {selectedTerm.fact}
                       </p>
                     </div>
                     <button 
                       onClick={() => {
                         onSave({
-                          type: 'drawing', // Using drawing as a generic type for scrapbook
+                          type: 'drawing', 
                           english: selectedTerm.english,
                           indonesian: selectedTerm.indonesian,
                           data: `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedTerm.english}&backgroundColor=b6e3f4`
                         });
                         addPoints(10, "Added to Scrapbook! 📓");
                       }}
-                      className="mt-6 w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-emerald-700 active:scale-95 transition-all"
+                      className="mt-6 w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-emerald-500 active:scale-95 transition-all"
                     >
                       ADD TO SCRAPBOOK 📓
                     </button>
@@ -240,19 +284,19 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center"
             >
-              <div className={`w-full max-w-md p-10 rounded-[50px] shadow-2xl border-8 border-white text-center mb-8 transition-colors ${DZIKR_PHRASES[dzikrIndex].color}`}>
-                <h2 className="text-5xl font-black mb-2">{DZIKR_PHRASES[dzikrIndex].arabic}</h2>
-                <h3 className="text-2xl font-bold mb-1 italic">"{DZIKR_PHRASES[dzikrIndex].english}"</h3>
-                <p className="text-sm opacity-60 font-black uppercase tracking-widest">{DZIKR_PHRASES[dzikrIndex].indonesian}</p>
+              <div className={`w-full max-w-md p-10 rounded-[50px] shadow-2xl border-8 border-white/10 text-center mb-8 transition-colors bg-white/5 backdrop-blur-md`}>
+                <h2 className="text-5xl font-black mb-2 text-emerald-50">{DZIKR_PHRASES[dzikrIndex].arabic}</h2>
+                <h3 className="text-2xl font-bold mb-1 italic text-emerald-300">"{DZIKR_PHRASES[dzikrIndex].english}"</h3>
+                <p className="text-sm opacity-60 font-black uppercase tracking-widest text-emerald-100">{DZIKR_PHRASES[dzikrIndex].indonesian}</p>
                 
                 <div className="mt-10 mb-6">
-                  <div className="text-8xl font-black opacity-20">{dzikrCount}</div>
-                  <div className="text-xs font-black uppercase tracking-widest opacity-40">Count / Hitungan</div>
+                  <div className="text-8xl font-black opacity-20 text-emerald-50">{dzikrCount}</div>
+                  <div className="text-xs font-black uppercase tracking-widest opacity-40 text-emerald-50">Count / Hitungan</div>
                 </div>
 
                 <button 
                   onClick={handleDzikrClick}
-                  className="w-32 h-32 bg-white rounded-full shadow-xl border-4 border-stone-100 flex items-center justify-center text-4xl hover:scale-110 active:scale-90 transition-all mx-auto mb-6"
+                  className="w-32 h-32 bg-emerald-600 rounded-full shadow-xl border-4 border-emerald-500/30 flex items-center justify-center text-4xl hover:scale-110 active:scale-90 transition-all mx-auto mb-6"
                 >
                   📿
                 </button>
@@ -261,7 +305,7 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                   {Array.from({ length: 33 }).map((_, i) => (
                     <div 
                       key={i} 
-                      className={`w-2 h-2 rounded-full transition-all ${i < dzikrCount % 33 ? 'bg-current scale-125' : 'bg-current opacity-20'}`}
+                      className={`w-2 h-2 rounded-full transition-all ${i < dzikrCount % 33 ? 'bg-emerald-400 scale-125' : 'bg-white opacity-10'}`}
                     />
                   ))}
                 </div>
@@ -269,7 +313,7 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
 
               <button 
                 onClick={nextDzikr}
-                className="bg-stone-800 text-white px-8 py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-stone-900 active:scale-95 transition-all"
+                className="bg-emerald-800 text-white px-8 py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-emerald-700 active:scale-95 transition-all border border-emerald-600/30"
               >
                 NEXT PHRASE ➡️
               </button>
@@ -284,14 +328,14 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
               className="max-w-2xl mx-auto"
             >
               {!showResult ? (
-                <div className="bg-white p-10 rounded-[40px] shadow-xl border-4 border-amber-100">
+                <div className="bg-white/10 backdrop-blur-md p-10 rounded-[40px] shadow-xl border-4 border-amber-500/30">
                   <div className="flex justify-between items-center mb-8">
-                    <span className="bg-amber-100 text-amber-700 px-4 py-1 rounded-full font-black text-xs uppercase">Question {quizIndex + 1} / {ISLAMIC_TERMS.length}</span>
-                    <span className="text-stone-400 font-black text-sm">Score: {score}</span>
+                    <span className="bg-amber-500/20 text-amber-300 px-4 py-1 rounded-full font-black text-xs uppercase border border-amber-500/30">Question {quizIndex + 1} / {ISLAMIC_TERMS.length}</span>
+                    <span className="text-emerald-200/60 font-black text-sm">Score: {score}</span>
                   </div>
                   
-                  <h2 className="text-3xl font-black text-stone-800 mb-8 text-center">
-                    What is the English word for <span className="text-amber-600">"{ISLAMIC_TERMS[quizIndex].indonesian}"</span>?
+                  <h2 className="text-3xl font-black text-emerald-50 mb-8 text-center">
+                    What is the English word for <span className="text-amber-400">"{ISLAMIC_TERMS[quizIndex].indonesian}"</span>?
                   </h2>
 
                   <div className="grid grid-cols-1 gap-4">
@@ -299,22 +343,22 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                       <button
                         key={i}
                         onClick={() => handleQuizAnswer(term.english === ISLAMIC_TERMS[quizIndex].english)}
-                        className="p-6 rounded-2xl border-4 border-stone-50 bg-stone-50 hover:border-amber-400 hover:bg-amber-50 transition-all text-left flex items-center gap-4"
+                        className="p-6 rounded-2xl border-4 border-white/5 bg-white/5 hover:border-amber-400 hover:bg-white/10 transition-all text-left flex items-center gap-4"
                       >
-                        <span className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-black text-stone-400 border">{String.fromCharCode(65 + i)}</span>
-                        <span className="text-xl font-black text-stone-700">{term.english}</span>
+                        <span className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-amber-300 border border-white/10">{String.fromCharCode(65 + i)}</span>
+                        <span className="text-xl font-black text-emerald-50">{term.english}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="bg-white p-12 rounded-[50px] shadow-2xl border-8 border-green-400 text-center">
+                <div className="bg-white/10 backdrop-blur-md p-12 rounded-[50px] shadow-2xl border-8 border-emerald-500/30 text-center">
                   <div className="text-8xl mb-6">🏆</div>
-                  <h2 className="text-4xl font-black text-stone-800 mb-2">QUIZ COMPLETE!</h2>
-                  <p className="text-xl text-stone-500 font-bold mb-8">You scored {score} out of {ISLAMIC_TERMS.length}!</p>
-                  <div className="bg-green-50 p-6 rounded-3xl mb-8 border-2 border-green-100">
-                    <div className="text-3xl font-black text-green-600">+{score * 10} ⭐</div>
-                    <div className="text-xs font-black text-green-400 uppercase tracking-widest mt-1">Wisdom Points Earned</div>
+                  <h2 className="text-4xl font-black text-emerald-50 mb-2">QUIZ COMPLETE!</h2>
+                  <p className="text-xl text-emerald-200/60 font-bold mb-8">You scored {score} out of {ISLAMIC_TERMS.length}!</p>
+                  <div className="bg-emerald-900/40 p-6 rounded-3xl mb-8 border-2 border-emerald-500/20">
+                    <div className="text-3xl font-black text-emerald-400">+{score * 10} ⭐</div>
+                    <div className="text-xs font-black text-emerald-300 uppercase tracking-widest mt-1">Wisdom Points Earned</div>
                   </div>
                   <button 
                     onClick={() => {
@@ -323,7 +367,7 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
                       setScore(0);
                       setShowResult(false);
                     }}
-                    className="w-full bg-green-500 text-white py-5 rounded-3xl font-black text-2xl shadow-lg hover:bg-green-600 active:scale-95 transition-all"
+                    className="w-full bg-emerald-600 text-white py-5 rounded-3xl font-black text-2xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all"
                   >
                     PLAY AGAIN! 🔄
                   </button>
@@ -340,14 +384,14 @@ const WisdomIsland: React.FC<WisdomIslandProps> = ({ onBack, addPoints, onSave }
 const MenuCard: React.FC<{ title: string, subtitle: string, icon: string, color: string, onClick: () => void }> = ({ title, subtitle, icon, color, onClick }) => (
   <button 
     onClick={onClick}
-    className="bg-white p-8 rounded-[40px] shadow-sm border-2 border-stone-100 hover:scale-105 transition-all group relative overflow-hidden text-left"
+    className="bg-white/5 backdrop-blur-md p-8 rounded-[40px] shadow-sm border-2 border-white/10 hover:scale-105 transition-all group relative overflow-hidden text-left"
   >
     <div className={`w-16 h-16 ${color} rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-lg group-hover:rotate-12 transition-transform`}>
       {icon}
     </div>
-    <h3 className="text-2xl font-black text-stone-800 leading-tight">{title}</h3>
-    <p className="text-stone-400 font-bold italic">{subtitle}</p>
-    <div className="mt-6 flex items-center gap-2 text-stone-300 font-black text-xs uppercase tracking-widest">
+    <h3 className="text-2xl font-black text-emerald-50 leading-tight">{title}</h3>
+    <p className="text-emerald-300/60 font-bold italic">{subtitle}</p>
+    <div className="mt-6 flex items-center gap-2 text-emerald-400/40 font-black text-xs uppercase tracking-widest">
       <span>Explore</span>
       <span className="group-hover:translate-x-2 transition-transform">➡️</span>
     </div>
