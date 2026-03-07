@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { identifyObject, playPronunciation } from '../services/geminiService';
 import { JournalEntry } from '../types';
@@ -21,18 +22,57 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
     return () => stopCamera();
   }, []);
 
+  useEffect(() => {
+    if (stream && videoRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  useEffect(() => {
+    // Ensure video is playing when result is cleared
+    if (!result && !loading && videoRef.current && stream) {
+      videoRef.current.play().catch(err => console.warn("Video play interrupted", err));
+    }
+  }, [result, loading, stream]);
+
   const startCamera = async () => {
     try {
+      // Stop existing tracks if any
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
+      
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Explicitly call play to ensure it starts
+        try {
+          await videoRef.current.play();
+        } catch (e) {
+          console.warn("Autoplay blocked or interrupted", e);
+        }
       }
     } catch (err) {
       console.error("Camera access denied", err);
-      alert("Please allow camera access to use Magic Lens!");
+      // Try fallback to any video device
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setStream(fallbackStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          await videoRef.current.play();
+        }
+      } catch (fallbackErr) {
+        alert("Please allow camera access to use Magic Lens!");
+      }
     }
   };
 
@@ -45,16 +85,21 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
   const handleCapture = async () => {
     if (!videoRef.current || !canvasRef.current || loading) return;
 
-    const canvas = canvasRef.current;
     const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    // Ensure video has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.warn("Video dimensions are 0, attempting to restart camera...");
+      await startCamera();
+      return;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    
     if (ctx) {
-      // Draw image to canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      // Convert to Base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       setCapturedImage(imageData);
       
@@ -68,8 +113,8 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
           playPronunciation(data.english);
           addPoints(40, `Found a ${data.english}! 🔍`);
         }
-      } catch (error) {
-        console.error("Identification failed", error);
+      } catch (err) {
+        console.error("Identification failed", err);
         alert("Oops! Toby couldn't see that clearly. Try again!");
       } finally {
         setLoading(false);
@@ -100,19 +145,27 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
       </div>
 
       <div className="relative w-full aspect-video bg-black rounded-[40px] overflow-hidden shadow-2xl border-4 border-white">
-        {!capturedImage ? (
-           <video 
-             ref={videoRef} 
-             autoPlay 
-             playsInline 
-             className="w-full h-full object-cover"
-           />
-        ) : (
-           <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+        <video 
+          ref={videoRef} 
+          autoPlay 
+          playsInline 
+          muted
+          className="w-full h-full object-cover"
+        />
+        
+        {/* Restart Camera Button */}
+        {!loading && !result && (
+          <button 
+            onClick={startCamera}
+            className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors z-10"
+            title="Restart Camera"
+          >
+            🔄
+          </button>
         )}
         
         {loading && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white">
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
             <p className="font-bold text-xl">Analyzing... ✨</p>
           </div>
@@ -120,7 +173,7 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
 
         {/* Results Overlay */}
         {result && !loading && (
-          <div className="absolute inset-x-4 bottom-4 animate-in slide-in-from-bottom-10 duration-500 z-30">
+          <div className="absolute inset-x-4 bottom-4 animate-in slide-in-from-bottom-10 duration-500">
             <div className="bg-white/95 backdrop-blur p-6 rounded-[30px] shadow-2xl border-4 border-green-400">
               <div className="flex items-start gap-4">
                 <div className="bg-green-100 text-3xl p-3 rounded-2xl">🐻</div>
@@ -143,19 +196,22 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
                       onClick={handleSaveToJournal}
                       className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-purple-700"
                     >
-                      📓 Collect
+                      📓 Collect in Book
                     </button>
                     <button 
-                      onClick={() => {
-                        setResult(null);
-                        setCapturedImage(null);
-                      }}
+                      onClick={() => setResult(null)}
                       className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-gray-200"
                     >
                       Try Another
                     </button>
                   </div>
                 </div>
+                <button 
+                  onClick={() => setResult(null)}
+                  className="text-gray-300 hover:text-gray-500"
+                >
+                  ✕
+                </button>
               </div>
             </div>
           </div>
@@ -164,7 +220,7 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {!result && !loading && !capturedImage && (
+      {!result && !loading && (
         <button 
           onClick={handleCapture}
           className="mt-8 bg-green-500 hover:bg-green-600 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-all active:scale-90 group"
@@ -175,6 +231,15 @@ const CameraIsland: React.FC<CameraIslandProps> = ({ onBack, addPoints, onSave }
         </button>
       )}
       
+      {result && !loading && (
+        <button 
+          onClick={() => setResult(null)}
+          className="mt-8 bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+        >
+          Scan Something Else! 🔍
+        </button>
+      )}
+
       <div className="mt-8 text-center text-gray-500 max-w-sm">
         Point your camera at an object and press the button. Toby will tell you what it is!
       </div>
