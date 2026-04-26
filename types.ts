@@ -16,7 +16,8 @@ export enum GameType {
   SIMON_SAYS = 'SIMON_SAYS',
   I_SPY = 'I_SPY',
   GREETING = 'GREETING',
-  WISDOM = 'WISDOM'
+  WISDOM = 'WISDOM',
+  GRAMMAR = 'GRAMMAR'
 }
 
 export interface PetState {

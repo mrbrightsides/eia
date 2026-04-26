@@ -28,5 +28,13 @@ This log documents the journey of building the **English Island Adventure**, an 
 - **Resource Management**: Temporarily hid the **Puppet Theater** feature to optimize API quota usage while keeping the code ready for future activation.
 - **UI/UX Polish**: Refined transitions and added "glassmorphism" effects to several islands for a more premium feel.
 
+## 📊 Phase 5: Grammar Mastery & PWA
+- **Grammar Garden**: Launched a comprehensive "Simple Present Tense" module with 50 interactive questions.
+    - **Reading Comprehension**: Integrated story-based questions about daily routines.
+    - **Verb Conjugation**: Implemented drills for 3rd person singular and plural forms.
+    - **Scoring System**: Added a scaled scoring mechanic (0-100) with performance badges.
+- **PWA Integration**: Transformed the app into a Progressive Web App with service worker support and a manifest for offline readiness and mobile home-screen installation.
+- **Hardware Fixes**: Optimized the Magic Lens camera logic to prevent "black screens" on mobile devices through auto-resume and muted-autoplay protocols.
+
 ---
-*Last Updated: March 2026*
+*Last Updated: April 2026*
