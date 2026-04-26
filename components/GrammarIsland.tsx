@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GrammarIslandProps {
@@ -16,7 +16,7 @@ interface Question {
   story?: string;
 }
 
-const QUESTIONS: Question[] = [
+const SIMPLE_PRESENT_QUESTIONS: Question[] = [
   // Section 1: Sarah's Story (Reading Comprehension)
   {
     id: 1,
@@ -395,8 +395,50 @@ const QUESTIONS: Question[] = [
   }
 ];
 
+const PRESENT_CONTINUOUS_QUESTIONS: Question[] = [
+  { id: 101, type: 'mcq', question: "She ____ (read) a book right now.", options: ["is reading", "are reading", "reading"], answer: "is reading" },
+  { id: 102, type: 'mcq', question: "They ____ (play) football at the moment.", options: ["are playing", "is playing", "play"], answer: "are playing" },
+  { id: 103, type: 'mcq', question: "I ____ (watch) TV now.", options: ["is watching", "am watching", "watching"], answer: "am watching" },
+  { id: 104, type: 'mcq', question: "He ____ (cook) dinner this evening.", options: ["are cooking", "is cooking", "cooks"], answer: "is cooking" },
+  { id: 105, type: 'mcq', question: "We ____ (study) for the exam currently.", options: ["is studying", "are studying", "study"], answer: "are studying" },
+  { id: 106, type: 'mcq', question: "The cat ____ (sleep) on the couch.", options: ["are sleeping", "is sleeping", "sleeps"], answer: "is sleeping" },
+  { id: 107, type: 'mcq', question: "You ____ (write) an email right now.", options: ["are writing", "is writing", "writes"], answer: "are writing" },
+  { id: 108, type: 'mcq', question: "It ____ (rain) heavily today.", options: ["is raining", "are raining", "rains"], answer: "is raining" },
+  { id: 109, type: 'mcq', question: "My parents ____ (travel) to Japan this week.", options: ["is traveling", "are traveling", "travel"], answer: "are traveling" },
+  { id: 110, type: 'mcq', question: "I ____ (work) from home today.", options: ["is working", "am working", "are working"], answer: "am working" },
+  { id: 111, type: 'mcq', question: "She ____ (run) in the park now.", options: ["is running", "are running", "runs"], answer: "is running" },
+  { id: 112, type: 'mcq', question: "The children ____ (play) in the garden.", options: ["are playing", "is playing", "plays"], answer: "are playing" },
+  { id: 113, type: 'mcq', question: "He ____ (not talk) to me at the moment.", options: ["is not talking", "are not talking", "not talk"], answer: "is not talking" },
+  { id: 114, type: 'mcq', question: "We ____ (visit) our grandparents this weekend.", options: ["is visiting", "are visiting", "visits"], answer: "are visiting" },
+  { id: 115, type: 'mcq', question: "They ____ (build) a new house this year.", options: ["are building", "is building", "build"], answer: "are building" },
+  { id: 116, type: 'mcq', question: "I ____ (not eat) lunch right now.", options: ["is not eating", "am not eating", "not eating"], answer: "am not eating" },
+  { id: 117, type: 'mcq', question: "She ____ (wait) for the bus at the moment.", options: ["are waiting", "is waiting", "waits"], answer: "is waiting" },
+  { id: 118, type: 'mcq', question: "We ____ (have) a meeting right now.", options: ["are having", "is having", "has"], answer: "are having" },
+  { id: 119, type: 'mcq', question: "The dog ____ (bark) outside.", options: ["is barking", "are barking", "barks"], answer: "is barking" },
+  { id: 120, type: 'mcq', question: "They ____ (clean) the house today.", options: ["is cleaning", "are cleaning", "cleans"], answer: "are cleaning" },
+  { id: 121, type: 'mcq', question: "I ____ (wait) for you at the coffee shop.", options: ["am waiting", "is waiting", "are waiting"], answer: "am waiting" },
+  { id: 122, type: 'mcq', question: "She ____ (not work) at the moment.", options: ["is not working", "are not working", "not work"], answer: "is not working" },
+  { id: 123, type: 'mcq', question: "We ____ (watch) a movie tonight.", options: ["are watching", "is watching", "watches"], answer: "are watching" },
+  { id: 124, type: 'mcq', question: "The teacher ____ (teach) a new lesson.", options: ["is teaching", "are teaching", "teaches"], answer: "is teaching" },
+  { id: 125, type: 'mcq', question: "They ____ (fix) the car this morning.", options: ["is fixing", "are fixing", "fixes"], answer: "are fixing" },
+  { id: 126, type: 'mcq', question: "The students ____ (study) in the library now.", options: ["are studying", "is studying", "studies"], answer: "are studying" },
+  { id: 127, type: 'mcq', question: "He ____ (talk) on the phone right now.", options: ["is talking", "are talking", "talks"], answer: "is talking" },
+  { id: 128, type: 'mcq', question: "I ____ (not go) to the gym today.", options: ["am not going", "is not going", "are not going"], answer: "am not going" },
+  { id: 129, type: 'mcq', question: "We ____ (travel) to Bali next week.", options: ["are traveling", "is traveling", "travels"], answer: "are traveling" },
+  { id: 130, type: 'mcq', question: "You ____ (not listen) to me at the moment.", options: ["are not listening", "is not listening", "not listening"], answer: "are not listening" }
+];
+
+type GrammarTopic = 'simplePresent' | 'presentContinuous';
+
+const TOPIC_QUESTIONS: Record<GrammarTopic, Question[]> = {
+  simplePresent: SIMPLE_PRESENT_QUESTIONS,
+  presentContinuous: PRESENT_CONTINUOUS_QUESTIONS
+};
+
+
 interface GrammarMastery {
   simplePresent: number;
+  presentContinuous: number;
 }
 
 const STUDY_CONTENT = {
@@ -447,21 +489,116 @@ const STUDY_CONTENT = {
         icon: "✏️"
       }
     ]
+  },
+  presentContinuous: {
+    title: "Present Continuous Tense ⏳",
+    tips: [
+      {
+        title: "1. Affirmative (Positif)",
+        description: "Digunakan untuk kejadian yang sedang berlangsung sekarang atau rencana masa depan yang pasti.",
+        pattern: "Subject + am/is/are + Verb-ing",
+        examples: [
+          "I am reading a book right now.",
+          "She is studying for her exam.",
+          "They are playing football in the garden."
+        ],
+        icon: "✅"
+      },
+      {
+        title: "2. Negative (Negatif)",
+        description: "Tambahkan 'not' setelah to-be (am/is/are).",
+        pattern: "Subject + am/is/are + not + Verb-ing",
+        examples: [
+          "I am not watching TV.",
+          "He is not (isn't) listening to me.",
+          "We are not (aren't) điing anything."
+        ],
+        icon: "❌"
+      },
+      {
+        title: "3. Interrogative (Tanya)",
+        description: "Pindahkan to-be (am/is/are) ke depan kalimat.",
+        pattern: "Am/Is/Are + Subject + Verb-ing?",
+        examples: [
+          "Are you listening to me?",
+          "Is she cooking dinner?",
+          "What are they doing?"
+        ],
+        icon: "❓"
+      },
+      {
+        title: "4. Time Indicators",
+        description: "Kata-kata yang sering muncul di Present Continuous.",
+        rules: [
+          "Now, Right now, At the moment",
+          "Today, This week, This month",
+          "Currently, Look!, Listen!"
+        ],
+        icon: "⏰"
+      }
+    ]
   }
 };
 
 const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<string[]>(new Array(QUESTIONS.length).fill(''));
+  const [currentIdx, setCurrentIdx] = useState<number>(() => {
+    const saved = localStorage.getItem('grammar_quiz_current_idx');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [selectedTopic, setSelectedTopic] = useState<GrammarTopic | null>(() => {
+    const saved = localStorage.getItem('grammar_quiz_topic') as GrammarTopic;
+    return saved || null;
+  });
+  const [answers, setAnswers] = useState<string[]>(() => {
+    const saved = localStorage.getItem('grammar_quiz_answers');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isFinished, setIsFinished] = useState(false);
-  const [view, setView] = useState<'menu' | 'study' | 'quiz'>('menu');
+  const [showReview, setShowReview] = useState(false);
   const [mastery, setMastery] = useState<GrammarMastery>(() => {
     const saved = localStorage.getItem('grammar_mastery');
-    return saved ? JSON.parse(saved) : { simplePresent: 0 };
+    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0 };
   });
-  const [showReview, setShowReview] = useState(false);
+  const [view, setView] = useState<'menu' | 'study' | 'quiz'>(() => {
+    return 'menu';
+  });
 
+  const QUESTIONS = selectedTopic ? TOPIC_QUESTIONS[selectedTopic] : [];
   const currentQuestion = QUESTIONS[currentIdx];
+
+  // Save progress periodically when in quiz mode
+  useEffect(() => {
+    if (view === 'quiz' && selectedTopic) {
+      localStorage.setItem('grammar_quiz_topic', selectedTopic);
+      localStorage.setItem('grammar_quiz_current_idx', currentIdx.toString());
+      localStorage.setItem('grammar_quiz_answers', JSON.stringify(answers));
+    }
+  }, [view, selectedTopic, currentIdx, answers]);
+
+  const clearQuizSession = () => {
+    localStorage.removeItem('grammar_quiz_topic');
+    localStorage.removeItem('grammar_quiz_current_idx');
+    localStorage.removeItem('grammar_quiz_answers');
+  };
+
+  const startQuiz = (topic: GrammarTopic) => {
+    setSelectedTopic(topic);
+    setAnswers(new Array(TOPIC_QUESTIONS[topic].length).fill(''));
+    setCurrentIdx(0);
+    setIsFinished(false);
+    setView('quiz');
+  };
+
+  const resumeQuiz = () => {
+    if (selectedTopic && answers.length > 0) {
+      setView('quiz');
+    }
+  };
+
+  const startStudy = (topic: GrammarTopic) => {
+    setSelectedTopic(topic);
+    setView('study');
+  };
 
   const handleAnswer = (option: string) => {
     const newAnswers = [...answers];
@@ -470,7 +607,8 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   };
 
   const saveProgress = (newScore: number) => {
-    const updatedMastery = { ...mastery, simplePresent: Math.max(mastery.simplePresent, Math.round(newScore)) };
+    if (!selectedTopic) return;
+    const updatedMastery = { ...mastery, [selectedTopic]: Math.max(mastery[selectedTopic], Math.round(newScore)) };
     setMastery(updatedMastery);
     localStorage.setItem('grammar_mastery', JSON.stringify(updatedMastery));
   };
@@ -482,7 +620,8 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
       setIsFinished(true);
       const score = calculateScore();
       saveProgress(score);
-      addPoints(Math.round(score), `Completed Grammar Practice with score ${Math.round(score)}!`);
+      clearQuizSession();
+      addPoints(Math.round(score), `Completed ${selectedTopic} practice with score ${Math.round(score)}!`);
     }
   };
 
@@ -502,54 +641,76 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   if (view === 'menu') {
     return (
       <div className="min-h-screen bg-indigo-50 p-6 flex flex-col items-center">
-        <header className="w-full max-w-4xl flex justify-between items-center mb-8">
+        <header className="w-full max-w-4xl flex justify-between items-center mb-4">
           <button onClick={onBack} className="bg-indigo-600 text-white px-6 py-2 rounded-full font-black shadow-lg hover:scale-105 transition-all">
             ⬅️ Back to Map
           </button>
           <h1 className="text-3xl font-black text-indigo-900">Grammar Island ✍️</h1>
+          <div className="w-10" />
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl pt-10">
-          {/* Mastery Card */}
-          <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col items-center text-center">
-            <div className="text-7xl mb-6">🏝️</div>
-            <h2 className="text-2xl font-black text-indigo-900 mb-2">My Progress</h2>
-            <div className="w-full bg-indigo-50 p-6 rounded-3xl mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-bold text-indigo-400">Simple Present</span>
-                <span className="font-black text-indigo-600">{mastery.simplePresent}%</span>
+        {selectedTopic && answers.some(a => a !== '') && !isFinished && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mb-6"
+          >
+            <div className="bg-amber-100 border-2 border-amber-200 p-6 rounded-[30px] flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="text-3xl">🧩</span>
+                <div>
+                  <h3 className="font-black text-amber-900 text-xl">Lanjut Quiz Sebelumnya?</h3>
+                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : 'Present Continuous'}.</p>
+                </div>
               </div>
-              <div className="w-full h-3 bg-indigo-100 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${mastery.simplePresent}%` }}
-                  className="h-full bg-indigo-500" 
-                />
-              </div>
+              <button 
+                onClick={resumeQuiz}
+                className="bg-amber-500 text-white px-10 py-4 rounded-2xl font-black shadow-lg hover:bg-amber-600 active:scale-95 transition-all"
+              >
+                LANJUTKAN SEKARANG 🚀
+              </button>
             </div>
-            <p className="text-gray-400 font-bold italic text-sm">Keep practicing to reach 100%!</p>
-          </div>
+          </motion.div>
+        )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl pt-10">
           {/* Simple Present Module */}
           <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col">
             <div className="text-5xl mb-4 text-left">📝</div>
-            <h2 className="text-3xl font-black text-indigo-600 mb-2">Present Tense</h2>
-            <p className="text-gray-500 font-bold mb-8 flex-1">
-              Master the basics of daily routines and general truths in English.
-            </p>
+            <h2 className="text-3xl font-black text-indigo-600 mb-2">Simple Present</h2>
+            <div className="w-full bg-indigo-50 p-4 rounded-2xl mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-xs text-indigo-400">Mastery</span>
+                <span className="font-black text-indigo-600">{mastery.simplePresent}%</span>
+              </div>
+              <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${mastery.simplePresent}%` }} className="h-full bg-indigo-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 font-bold mb-8 flex-1">Routines and facts.</p>
             <div className="flex flex-col gap-3">
-              <button 
-                onClick={() => setView('study')}
-                className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black shadow-sm hover:bg-indigo-200 transition-all"
-              >
-                STUDY TIPS 📚
-              </button>
-              <button 
-                onClick={() => setView('quiz')}
-                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 active:scale-95 transition-all"
-              >
-                TAKE QUIZ 🚀
-              </button>
+              <button onClick={() => startStudy('simplePresent')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
+              <button onClick={() => startQuiz('simplePresent')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
+            </div>
+          </div>
+
+          {/* Present Continuous Module */}
+          <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col">
+            <div className="text-5xl mb-4 text-left">⏳</div>
+            <h2 className="text-3xl font-black text-indigo-600 mb-2">Present Continuous</h2>
+            <div className="w-full bg-indigo-50 p-4 rounded-2xl mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-xs text-indigo-400">Mastery</span>
+                <span className="font-black text-indigo-600">{mastery.presentContinuous}%</span>
+              </div>
+              <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${mastery.presentContinuous}%` }} className="h-full bg-indigo-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 font-bold mb-8 flex-1">Happening right now.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => startStudy('presentContinuous')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
+              <button onClick={() => startQuiz('presentContinuous')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
             </div>
           </div>
         </div>
@@ -557,19 +718,20 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
     );
   }
 
-  if (view === 'study') {
+  if (view === 'study' && selectedTopic) {
+    const studyContent = STUDY_CONTENT[selectedTopic];
     return (
       <div className="min-h-screen bg-indigo-50 p-6 flex flex-col items-center pb-24">
         <header className="w-full max-w-4xl flex justify-between items-center mb-8">
           <button onClick={() => setView('menu')} className="bg-white text-indigo-600 px-6 py-2 rounded-full font-black shadow-md border-2 border-indigo-100">
             ⬅️ Menu
           </button>
-          <h2 className="text-2xl font-black text-indigo-900">{STUDY_CONTENT.simplePresent.title}</h2>
+          <h2 className="text-2xl font-black text-indigo-900">{studyContent.title}</h2>
           <div className="w-10" />
         </header>
 
         <div className="w-full max-w-3xl space-y-6">
-          {STUDY_CONTENT.simplePresent.tips.map((tip, idx) => (
+          {studyContent.tips.map((tip, idx) => (
             <motion.div 
               key={idx}
               initial={{ opacity: 0, y: 20 }}
@@ -611,7 +773,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
           
           <div className="pt-10 flex justify-center">
             <button 
-              onClick={() => setView('quiz')}
+              onClick={() => startQuiz(selectedTopic)}
               className="bg-indigo-600 text-white px-12 py-5 rounded-[30px] font-black text-2xl shadow-xl hover:bg-indigo-700 active:scale-95 transition-all"
             >
               READY FOR QUIZ? 🚀
@@ -621,6 +783,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
       </div>
     );
   }
+
 
   if (isFinished) {
     const score = calculateScore();
@@ -653,9 +816,19 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                 <div className="space-y-4">
                   <h4 className="font-black text-indigo-900 border-b border-indigo-200 pb-2">💡 Quick Reinforcement</h4>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    Remember! We use <span className="font-bold text-indigo-600">Simple Present</span> for routines and facts. 
-                    Add <span className="font-bold border-b-2 border-indigo-200">-s/-es</span> only for <span className="italic">He, She, It</span>. 
-                    For negatives and questions, use <span className="font-bold">Do</span> or <span className="font-bold">Does</span> + Verb 1 (no -s).
+                    {selectedTopic === 'simplePresent' ? (
+                      <>
+                        Remember! We use <span className="font-bold text-indigo-600">Simple Present</span> for routines and facts. 
+                        Add <span className="font-bold border-b-2 border-indigo-200">-s/-es</span> only for <span className="italic">He, She, It</span>. 
+                        For negatives and questions, use <span className="font-bold">Do</span> or <span className="font-bold">Does</span> + Verb 1 (no -s).
+                      </>
+                    ) : (
+                      <>
+                        Awesome! We use <span className="font-bold text-indigo-600">Present Continuous</span> for things happening <span className="italic">now</span>. 
+                        Use <span className="font-bold">am/is/are + Verb-ing</span>. 
+                        Don't forget the to-be! (I am, you are, he is).
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
