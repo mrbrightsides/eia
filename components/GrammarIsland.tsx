@@ -428,17 +428,52 @@ const PRESENT_CONTINUOUS_QUESTIONS: Question[] = [
   { id: 130, type: 'mcq', question: "You ____ (not listen) to me at the moment.", options: ["are not listening", "is not listening", "not listening"], answer: "are not listening" }
 ];
 
-type GrammarTopic = 'simplePresent' | 'presentContinuous';
+const SIMPLE_PAST_QUESTIONS: Question[] = [
+  { id: 201, type: 'mcq', question: "I ____ (visit) my grandmother last Sunday.", options: ["visit", "visited", "visiting"], answer: "visited" },
+  { id: 202, type: 'mcq', question: "They ____ (go) to the cinema last night.", options: ["go", "goes", "went"], answer: "went" },
+  { id: 203, type: 'mcq', question: "She ____ (eat) pizza for dinner yesterday.", options: ["eat", "ate", "eaten"], answer: "ate" },
+  { id: 204, type: 'mcq', question: "We ____ (not / play) football last weekend.", options: ["didn't play", "didn't played", "don't play"], answer: "didn't play" },
+  { id: 205, type: 'mcq', question: "____ you (see) that movie yesterday?", options: ["Do / see", "Did / saw", "Did / see"], answer: "Did / see" },
+  { id: 206, type: 'mcq', question: "The cat ____ (sleep) all day yesterday.", options: ["sleep", "sleept", "slept"], answer: "slept" },
+  { id: 207, type: 'mcq', question: "He ____ (buy) a new car last month.", options: ["buy", "bought", "buyed"], answer: "bought" },
+  { id: 208, type: 'mcq', question: "I ____ (study) very hard for the test.", options: ["study", "studied", "studies"], answer: "studied" },
+  { id: 209, type: 'mcq', question: "They ____ (be) late for the meeting.", options: ["was", "were", "are"], answer: "were" },
+  { id: 210, type: 'mcq', question: "It ____ (rain) a lot last week.", options: ["rain", "rained", "rains"], answer: "rained" },
+  { id: 211, type: 'mcq', question: "Sarah ____ (write) a letter to her friend.", options: ["write", "wrote", "written"], answer: "wrote" },
+  { id: 212, type: 'mcq', question: "We ____ (clean) the house together.", options: ["clean", "cleaned", "cleans"], answer: "cleaned" },
+  { id: 213, type: 'mcq', question: "He ____ (not / speak) to me yesterday.", options: ["didn't speak", "doesn't speak", "didn't spoke"], answer: "didn't speak" },
+  { id: 214, type: 'mcq', question: "The children ____ (drink) all the juice.", options: ["drink", "drunk", "drank"], answer: "drank" },
+  { id: 215, type: 'mcq', question: "Where ____ they (go) for vacation?", options: ["did / went", "did / go", "do / go"], answer: "did / go" },
+  { id: 216, type: 'mcq', question: "I ____ (finish) my work two hours ago.", options: ["finish", "finished", "finishes"], answer: "finished" },
+  { id: 217, type: 'mcq', question: "She ____ (lose) her keys yesterday.", options: ["lose", "lost", "losed"], answer: "lost" },
+  { id: 218, type: 'mcq', question: "My father ____ (cook) a delicious meal.", options: ["cook", "cooked", "cooks"], answer: "cooked" },
+  { id: 219, type: 'mcq', question: "The train ____ (leave) at 7:00 AM.", options: ["leave", "left", "leaved"], answer: "left" },
+  { id: 220, type: 'mcq', question: "They ____ (watch) a scary movie.", options: ["watch", "watched", "watching"], answer: "watched" },
+  { id: 221, type: 'mcq', question: "I ____ (see) a ghost last night!", options: ["see", "saw", "seen"], answer: "saw" },
+  { id: 222, type: 'mcq', question: "She ____ (not / like) the food at the party.", options: ["didn't like", "didn't liked", "don't like"], answer: "didn't like" },
+  { id: 223, type: 'mcq', question: "We ____ (take) many photos on the trip.", options: ["take", "took", "taken"], answer: "took" },
+  { id: 224, type: 'mcq', question: "He ____ (break) his leg while skiing.", options: ["break", "broke", "broken"], answer: "broke" },
+  { id: 225, type: 'mcq', question: "____ the teacher (give) us homework?", options: ["Did / gave", "Did / give", "Do / give"], answer: "Did / give" },
+  { id: 226, type: 'mcq', question: "The birds ____ (fly) south for the winter.", options: ["fly", "flied", "flew"], answer: "flew" },
+  { id: 227, type: 'mcq', question: "She ____ (understand) the lesson well.", options: ["understand", "understood", "understands"], answer: "understood" },
+  { id: 228, type: 'mcq', question: "I ____ (forget) my umbrella at home.", options: ["forget", "forgot", "forgotten"], answer: "forgot" },
+  { id: 229, type: 'mcq', question: "They ____ (win) the game yesterday.", options: ["win", "won", "wins"], answer: "won" },
+  { id: 230, type: 'mcq', question: "He ____ (tell) me a secret.", options: ["tell", "telled", "told"], answer: "told" }
+];
+
+type GrammarTopic = 'simplePresent' | 'presentContinuous' | 'simplePast';
 
 const TOPIC_QUESTIONS: Record<GrammarTopic, Question[]> = {
   simplePresent: SIMPLE_PRESENT_QUESTIONS,
-  presentContinuous: PRESENT_CONTINUOUS_QUESTIONS
+  presentContinuous: PRESENT_CONTINUOUS_QUESTIONS,
+  simplePast: SIMPLE_PAST_QUESTIONS
 };
 
 
 interface GrammarMastery {
   simplePresent: number;
   presentContinuous: number;
+  simplePast: number;
 }
 
 const STUDY_CONTENT = {
@@ -537,7 +572,198 @@ const STUDY_CONTENT = {
         icon: "⏰"
       }
     ]
+  },
+  simplePast: {
+    title: "Simple Past Tense 🕰️",
+    tips: [
+      {
+        title: "1. Affirmative (Positif)",
+        description: "Digunakan untuk kejadian yang sudah selesai di masa lampau.",
+        pattern: "Subject + Verb 2 (Regular -ed / Irregular)",
+        examples: [
+          "I visited my grandma yesterday.",
+          "She went to Paris last year.",
+          "They watched a movie last night."
+        ],
+        icon: "✅"
+      },
+      {
+        title: "2. Negative (Negatif)",
+        description: "Gunakan 'did not' (didn't) diikuti kata kerja dasar (Verb 1).",
+        pattern: "Subject + didn't + Verb 1",
+        examples: [
+          "I didn't play soccer yesterday.",
+          "He didn't eat breakfast this morning.",
+          "We didn't go to the party."
+        ],
+        icon: "❌"
+      },
+      {
+        title: "3. Interrogative (Tanya)",
+        description: "Awali dengan 'Did', lalu gunakan kata kerja dasar (Verb 1).",
+        pattern: "Did + Subject + Verb 1?",
+        examples: [
+          "Did you sleep well last night?",
+          "Did she finish her homework?",
+          "Where did they go?"
+        ],
+        icon: "❓"
+      },
+      {
+        title: "4. Regular vs Irregular",
+        description: "Hati-hati dengan perubahan kata kerja!",
+        rules: [
+          "Regular: Tambahkan -ed (play -> played, walk -> walked)",
+          "Irregular: Berubah total (go -> went, see -> saw, buy -> bought, eat -> ate)",
+          "Time Words: Yesterday, Last night, Two days ago, In 2022"
+        ],
+        icon: "📖"
+      }
+    ]
   }
+};
+
+const SIMPLE_PAST_VERBS = {
+  regular: [
+    { v1: 'walk', v2: 'walked', meaning: 'berjalan' },
+    { v1: 'play', v2: 'played', meaning: 'bermain' },
+    { v1: 'visit', v2: 'visited', meaning: 'mengunjungi' },
+    { v1: 'study', v2: 'studied', meaning: 'belajar' },
+    { v1: 'clean', v2: 'cleaned', meaning: 'membersihkan' },
+    { v1: 'wash', v2: 'washed', meaning: 'mencuci' },
+    { v1: 'cook', v2: 'cooked', meaning: 'memasak' },
+    { v1: 'watch', v2: 'watched', meaning: 'menonton' },
+  ],
+  irregularCategories: [
+    {
+      name: "1. Tidak berubah sama sekali",
+      description: "Tulisan & pengucapan tetap",
+      verbs: [
+        { v1: 'cut', v2: 'cut', meaning: 'memotong' },
+        { v1: 'put', v2: 'put', meaning: 'meletakkan' },
+        { v1: 'hit', v2: 'hit', meaning: 'memukul' },
+        { v1: 'shut', v2: 'shut', meaning: 'menutup' },
+        { v1: 'let', v2: 'let', meaning: 'membiarkan' },
+        { v1: 'set', v2: 'set', meaning: 'mengatur' },
+        { v1: 'cost', v2: 'cost', meaning: 'berbiaya' },
+        { v1: 'hurt', v2: 'hurt', meaning: 'melukai' },
+        { v1: 'bet', v2: 'bet', meaning: 'bertaruh' },
+        { v1: 'burst', v2: 'burst', meaning: 'meledak' },
+      ]
+    },
+    {
+      name: "2. Tulisan sama, pengucapan beda",
+      description: "Contoh: read /ri:d/ -> /red/",
+      verbs: [
+        { v1: 'read', v2: 'read', meaning: 'membaca' },
+      ]
+    },
+    {
+      name: "3. Akhiran berubah jadi -t",
+      description: "Bunyi 'd' atau vokal berubah ke 't'",
+      verbs: [
+        { v1: 'spend', v2: 'spent', meaning: 'menghabiskan' },
+        { v1: 'send', v2: 'sent', meaning: 'mengirim' },
+        { v1: 'build', v2: 'built', meaning: 'membangun' },
+        { v1: 'lend', v2: 'lent', meaning: 'meminjamkan' },
+        { v1: 'bend', v2: 'bent', meaning: 'membengkokkan' },
+        { v1: 'feel', v2: 'felt', meaning: 'merasa' },
+        { v1: 'keep', v2: 'kept', meaning: 'menjaga' },
+        { v1: 'sleep', v2: 'slept', meaning: 'tidur' },
+        { v1: 'leave', v2: 'left', meaning: 'meninggalkan' },
+        { v1: 'lose', v2: 'lost', meaning: 'kehilangan' },
+        { v1: 'mean', v2: 'meant', meaning: 'berarti' },
+        { v1: 'meet', v2: 'met', meaning: 'bertemu' },
+        { v1: 'dream', v2: 'dreamt', meaning: 'bermimpi' },
+        { v1: 'burn', v2: 'burnt', meaning: 'membakar' },
+        { v1: 'learn', v2: 'learnt', meaning: 'belajar' },
+      ]
+    },
+    {
+      name: "4. Perubahan Vokal (i -> a)",
+      description: "Pola paling umum: sing -> sang",
+      verbs: [
+        { v1: 'sing', v2: 'sang', meaning: 'bernyanyi' },
+        { v1: 'drink', v2: 'drank', meaning: 'minum' },
+        { v1: 'ring', v2: 'rang', meaning: 'berdering' },
+        { v1: 'swim', v2: 'swam', meaning: 'berenang' },
+        { v1: 'begin', v2: 'began', meaning: 'memulai' },
+        { v1: 'sit', v2: 'sat', meaning: 'duduk' },
+      ]
+    },
+    {
+      name: "5. Perubahan Vokal (i -> o)",
+      description: "Pola: drive -> drove",
+      verbs: [
+        { v1: 'drive', v2: 'drove', meaning: 'mengemudi' },
+        { v1: 'ride', v2: 'rode', meaning: 'mengendarai' },
+        { v1: 'write', v2: 'wrote', meaning: 'menulis' },
+        { v1: 'rise', v2: 'rose', meaning: 'terbit/naik' },
+        { v1: 'shine', v2: 'shone', meaning: 'bersinar' },
+      ]
+    },
+    {
+      name: "6. Perubahan Vokal (ea -> o)",
+      description: "Pola: speak -> spoke",
+      verbs: [
+        { v1: 'speak', v2: 'spoke', meaning: 'berbicara' },
+        { v1: 'break', v2: 'broke', meaning: 'memecahkan' },
+        { v1: 'steal', v2: 'stole', meaning: 'mencuri' },
+        { v1: 'wake', v2: 'woke', meaning: 'bangun' },
+      ]
+    },
+    {
+      name: "7. Akhiran -ought / -aught",
+      description: "Pola: buy -> bought",
+      verbs: [
+        { v1: 'buy', v2: 'bought', meaning: 'membeli' },
+        { v1: 'bring', v2: 'brought', meaning: 'membawa' },
+        { v1: 'think', v2: 'thought', meaning: 'berpikir' },
+        { v1: 'seek', v2: 'sought', meaning: 'mencari' },
+        { v1: 'teach', v2: 'taught', meaning: 'mengajar' },
+        { v1: 'catch', v2: 'caught', meaning: 'menangkap' },
+        { v1: 'fight', v2: 'fought', meaning: 'berkelahi' },
+      ]
+    },
+    {
+      name: "8. Akhiran -ew",
+      description: "Pola: know -> knew",
+      verbs: [
+        { v1: 'know', v2: 'knew', meaning: 'tahu' },
+        { v1: 'throw', v2: 'threw', meaning: 'melempar' },
+        { v1: 'grow', v2: 'grew', meaning: 'tumbuh' },
+        { v1: 'blow', v2: 'blew', meaning: 'meniup' },
+        { v1: 'fly', v2: 'flew', meaning: 'terbang' },
+        { v1: 'draw', v2: 'drew', meaning: 'menggambar' },
+      ]
+    },
+    {
+      name: "9. Berubah Total",
+      description: "Tidak mengikuti pola jelas",
+      verbs: [
+        { v1: 'go', v2: 'went', meaning: 'pergi' },
+        { v1: 'be', v2: 'was/were', meaning: 'adalah' },
+        { v1: 'do', v2: 'did', meaning: 'melakukan' },
+        { v1: 'have', v2: 'had', meaning: 'mempunyai' },
+        { v1: 'make', v2: 'made', meaning: 'membuat' },
+        { v1: 'take', v2: 'took', meaning: 'mengambil' },
+        { v1: 'come', v2: 'came', meaning: 'datang' },
+        { v1: 'get', v2: 'got', meaning: 'mendapatkan' },
+        { v1: 'see', v2: 'saw', meaning: 'melihat' },
+      ]
+    },
+    {
+      name: "10. Pola Khusus (-ear -> -ore, etc)",
+      description: "Pola berulang lainnya",
+      verbs: [
+        { v1: 'wear', v2: 'wore', meaning: 'memakai' },
+        { v1: 'tear', v2: 'tore', meaning: 'merobek' },
+        { v1: 'bear', v2: 'bore', meaning: 'menahan' },
+        { v1: 'swear', v2: 'swore', meaning: 'bersumpah' },
+        { v1: 'shake', v2: 'shook', meaning: 'mengocok' },
+      ]
+    }
+  ]
 };
 
 const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
@@ -557,9 +783,9 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   const [showReview, setShowReview] = useState(false);
   const [mastery, setMastery] = useState<GrammarMastery>(() => {
     const saved = localStorage.getItem('grammar_mastery');
-    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0 };
+    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0, simplePast: 0 };
   });
-  const [view, setView] = useState<'menu' | 'study' | 'quiz'>(() => {
+  const [view, setView] = useState<'menu' | 'study' | 'quiz' | 'verbs'>(() => {
     return 'menu';
   });
 
@@ -660,7 +886,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                 <span className="text-3xl">🧩</span>
                 <div>
                   <h3 className="font-black text-amber-900 text-xl">Lanjut Quiz Sebelumnya?</h3>
-                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : 'Present Continuous'}.</p>
+                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : selectedTopic === 'presentContinuous' ? 'Present Continuous' : 'Simple Past'}.</p>
                 </div>
               </div>
               <button 
@@ -711,6 +937,104 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
             <div className="flex flex-col gap-3">
               <button onClick={() => startStudy('presentContinuous')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
               <button onClick={() => startQuiz('presentContinuous')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
+            </div>
+          </div>
+
+          {/* Simple Past Module */}
+          <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col">
+            <div className="text-5xl mb-4 text-left">🕰️</div>
+            <h2 className="text-3xl font-black text-indigo-600 mb-2">Simple Past</h2>
+            <div className="w-full bg-indigo-50 p-4 rounded-2xl mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-xs text-indigo-400">Mastery</span>
+                <span className="font-black text-indigo-600">{mastery.simplePast}%</span>
+              </div>
+              <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${mastery.simplePast}%` }} className="h-full bg-indigo-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 font-bold mb-8 flex-1">Completed actions in the past.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => setView('verbs')} className="w-full bg-amber-100 text-amber-600 py-4 rounded-2xl font-black hover:bg-amber-200 transition-all flex items-center justify-center gap-2">
+                <span>📖</span> VERB LIST (V2)
+              </button>
+              <button onClick={() => startStudy('simplePast')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
+              <button onClick={() => startQuiz('simplePast')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'verbs') {
+    return (
+      <div className="min-h-screen bg-indigo-50 p-6 flex flex-col items-center">
+        <header className="w-full max-w-4xl flex justify-between items-center mb-8">
+          <button onClick={() => setView('menu')} className="bg-white text-indigo-600 px-6 py-2 rounded-full font-black shadow-md border-2 border-indigo-100">
+            ⬅️ Menu
+          </button>
+          <h2 className="text-2xl font-black text-indigo-900">Verb List (Bentuk Lampau) 🕰️</h2>
+          <div className="w-10" />
+        </header>
+
+        <div className="w-full max-w-5xl space-y-12 mb-24">
+          {/* Regular Verbs */}
+          <div className="bg-white rounded-[40px] shadow-xl overflow-hidden">
+            <div className="bg-emerald-500 p-8">
+              <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                <span>✅</span> Regular Verbs (+ed)
+              </h3>
+              <p className="text-emerald-100 font-bold">Paling mudah! Tinggal tambahkan 'ed'.</p>
+            </div>
+            <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {SIMPLE_PAST_VERBS.regular.map((v, i) => (
+                  <div key={i} className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="font-bold text-gray-400">{v.v1}</span>
+                      <span className="text-xs">➡️</span>
+                      <span className="font-black text-emerald-600">{v.v2}</span>
+                    </div>
+                    <div className="text-[10px] font-bold text-emerald-300 uppercase mt-1">{v.meaning}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Irregular Categories */}
+          <div className="space-y-8">
+            <h3 className="text-3xl font-black text-indigo-900 text-center uppercase tracking-widest">⚡ Irregular Verb Patterns</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {SIMPLE_PAST_VERBS.irregularCategories.map((cat, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white rounded-[40px] shadow-lg border-2 border-indigo-50"
+                >
+                  <div className="bg-indigo-600 p-6 rounded-t-[40px]">
+                    <h4 className="text-lg font-black text-white">{cat.name}</h4>
+                    <p className="text-indigo-200 text-xs font-bold italic">{cat.description}</p>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-3">
+                      {cat.verbs.map((v, i) => (
+                        <div key={i} className="flex justify-between items-center p-3 bg-indigo-50/30 rounded-xl hover:bg-indigo-50 transition-colors">
+                          <div className="flex gap-4">
+                            <span className="font-bold text-gray-400 w-16">{v.v1}</span>
+                            <span className="font-black text-indigo-600">{v.v2}</span>
+                          </div>
+                          <span className="text-xs text-gray-400 italic">{v.meaning}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
@@ -822,11 +1146,17 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                         Add <span className="font-bold border-b-2 border-indigo-200">-s/-es</span> only for <span className="italic">He, She, It</span>. 
                         For negatives and questions, use <span className="font-bold">Do</span> or <span className="font-bold">Does</span> + Verb 1 (no -s).
                       </>
-                    ) : (
+                    ) : selectedTopic === 'presentContinuous' ? (
                       <>
                         Awesome! We use <span className="font-bold text-indigo-600">Present Continuous</span> for things happening <span className="italic">now</span>. 
                         Use <span className="font-bold">am/is/are + Verb-ing</span>. 
                         Don't forget the to-be! (I am, you are, he is).
+                      </>
+                    ) : (
+                      <>
+                        Great job! <span className="font-bold text-indigo-600">Simple Past</span> is for things that are finished. 
+                        Most use <span className="font-bold">-ed</span>, but watch out for <span className="italic italic-not-really">Irregular Verbs</span> {"(go -> went)"}. 
+                        For negatives and questions, use <span className="font-bold">Did</span> + Verb 1.
                       </>
                     )}
                   </p>
