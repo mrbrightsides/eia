@@ -461,12 +461,46 @@ const SIMPLE_PAST_QUESTIONS: Question[] = [
   { id: 230, type: 'mcq', question: "He ____ (tell) me a secret.", options: ["tell", "telled", "told"], answer: "told" }
 ];
 
-type GrammarTopic = 'simplePresent' | 'presentContinuous' | 'simplePast';
+const SIMPLE_FUTURE_QUESTIONS: Question[] = [
+  { id: 301, type: 'mcq', question: "I think it ____ (rain) tomorrow.", options: ["will rain", "is going to rain", "rains"], answer: "will rain" },
+  { id: 302, type: 'mcq', question: "Look at those clouds! It ____ (rain).", options: ["will rain", "is going to rain", "rains"], answer: "is going to rain" },
+  { id: 303, type: 'mcq', question: "I ____ (visit) my dentist next Monday at 10 AM.", options: ["will visit", "am going to visit", "visits"], answer: "am going to visit" },
+  { id: 304, type: 'mcq', question: "Wait! I ____ (help) you with those bags.", options: ["will help", "am going to help", "helps"], answer: "will help" },
+  { id: 305, type: 'mcq', question: "We ____ (have) a party next Saturday. We've already invited everyone.", options: ["will have", "are going to have", "have"], answer: "are going to have" },
+  { id: 306, type: 'mcq', question: "I ____ (be) a doctor when I grow up.", options: ["will be", "am going to be", "am"], answer: "am going to be" },
+  { id: 307, type: 'mcq', question: "The phone is ringing. I ____ (answer) it!", options: ["will answer", "am going to answer", "answers"], answer: "will answer" },
+  { id: 308, type: 'mcq', question: "They ____ (fly) to Paris next week. They bought the tickets.", options: ["will fly", "are going to fly", "flies"], answer: "are going to fly" },
+  { id: 309, type: 'mcq', question: "I'm sure you ____ (like) this book.", options: ["will like", "are going to like", "likes"], answer: "will like" },
+  { id: 310, type: 'mcq', question: "He ____ (not / come) to the party. He told me yesterday.", options: ["won't come", "is not going to come", "doesn't come"], answer: "is not going to come" },
+  { id: 311, type: 'mcq', question: "I ____ (buy) some milk on my way home.", options: ["will buy", "am going to buy", "buy"], answer: "will buy" },
+  { id: 312, type: 'mcq', question: "What ____ you (do) tonight?", options: ["will / do", "are / going to do", "do / do"], answer: "are / going to do" },
+  { id: 313, type: 'mcq', question: "Scientists believe the temperature ____ (rise) in the future.", options: ["will rise", "is going to rise", "rises"], answer: "will rise" },
+  { id: 314, type: 'mcq', question: "I ____ (not / tell) anyone your secret, I promise!", options: ["won't tell", "am not going to tell", "don't tell"], answer: "won't tell" },
+  { id: 315, type: 'mcq', question: "____ you (open) the window, please?", options: ["Will", "Are going to", "Do"], answer: "Will" },
+  { id: 316, type: 'mcq', question: "We ____ (move) to a new house next month.", options: ["will move", "are going to move", "move"], answer: "are going to move" },
+  { id: 317, type: 'mcq', question: "I ____ (go) to the cinema tonight. I've got the tickets here.", options: ["will go", "am going to go", "go"], answer: "am going to go" },
+  { id: 318, type: 'mcq', question: "In 2050, people ____ (drive) flying cars.", options: ["will drive", "are going to drive", "drive"], answer: "will drive" },
+  { id: 319, type: 'mcq', question: "Watch out! You ____ (fall)!", options: ["will fall", "are going to fall", "fall"], answer: "are going to fall" },
+  { id: 320, type: 'mcq', question: "I ____ (make) a sandwich if you're hungry.", options: ["will make", "am going to make", "make"], answer: "will make" },
+  { id: 321, type: 'mcq', question: "Next year, she ____ (study) in London.", options: ["will study", "is going to study", "studies"], answer: "is going to study" },
+  { id: 322, type: 'mcq', question: "I ____ (stay) at home tonight. I'm very tired.", options: ["will stay", "am going to stay", "stay"], answer: "am going to stay" },
+  { id: 323, type: 'mcq', question: "They ____ (not / play) football tomorrow because it's raining.", options: ["won't play", "are not going to play", "don't play"], answer: "are not going to play" },
+  { id: 324, type: 'mcq', question: "I ____ (clean) my room this afternoon.", options: ["will clean", "am going to clean", "clean"], answer: "am going to clean" },
+  { id: 325, type: 'mcq', question: "Maybe we ____ (see) a movie later.", options: ["will see", "are going to see", "see"], answer: "will see" },
+  { id: 326, type: 'mcq', question: "I ____ (give) you a call when I arrive.", options: ["will give", "am going to give", "give"], answer: "will give" },
+  { id: 327, type: 'mcq', question: "He ____ (get) married in June.", options: ["will get", "is going to get", "gets"], answer: "is going to get" },
+  { id: 328, type: 'mcq', question: "I ____ (have) the steak, please.", options: ["will have", "am going to have", "have"], answer: "will have" },
+  { id: 329, type: 'mcq', question: "The train ____ (not / wait) for us!", options: ["will not wait", "is not going to wait", "doesn't wait"], answer: "will not wait" },
+  { id: 330, type: 'mcq', question: "____ you (be) my friend forever?", options: ["Will", "Are going to", "Do"], answer: "Will" }
+];
+
+type GrammarTopic = 'simplePresent' | 'presentContinuous' | 'simplePast' | 'simpleFuture';
 
 const TOPIC_QUESTIONS: Record<GrammarTopic, Question[]> = {
   simplePresent: SIMPLE_PRESENT_QUESTIONS,
   presentContinuous: PRESENT_CONTINUOUS_QUESTIONS,
-  simplePast: SIMPLE_PAST_QUESTIONS
+  simplePast: SIMPLE_PAST_QUESTIONS,
+  simpleFuture: SIMPLE_FUTURE_QUESTIONS
 };
 
 
@@ -474,6 +508,7 @@ interface GrammarMastery {
   simplePresent: number;
   presentContinuous: number;
   simplePast: number;
+  simpleFuture: number;
 }
 
 const STUDY_CONTENT = {
@@ -618,6 +653,53 @@ const STUDY_CONTENT = {
           "Time Words: Yesterday, Last night, Two days ago, In 2022"
         ],
         icon: "📖"
+      }
+    ]
+  },
+  simpleFuture: {
+    title: "Simple Future Tense 🚀",
+    tips: [
+      {
+        title: "1. Using 'Will'",
+        description: "Digunakan untuk keputusan spontan, janji, atau prediksi tanpa bukti kuat.",
+        pattern: "Subject + will + Verb 1",
+        examples: [
+          "Wait! I will help you with those bags. (Spontan)",
+          "I will call you tomorrow. (Janji)",
+          "I think it will rain later. (Prediksi)"
+        ],
+        icon: "⚡"
+      },
+      {
+        title: "2. Using 'Be Going To'",
+        description: "Digunakan untuk rencana yang sudah dibuat (intentions) atau prediksi berdasarkan bukti nyata.",
+        pattern: "Subject + am/is/are + going to + Verb 1",
+        examples: [
+          "I am going to visit Bali next week. (Rencana)",
+          "Look at those dark clouds! It is going to rain. (Bukti nyata)",
+          "We are going to have a party on Saturday."
+        ],
+        icon: "📅"
+      },
+      {
+        title: "3. Negative Form",
+        description: "Tambahkan 'not' setelah will atau to-be.",
+        pattern: "will not (won't) / am not / isn't / aren't going to",
+        examples: [
+          "I won't tell your secret.",
+          "They are not going to come to the party."
+        ],
+        icon: "❌"
+      },
+      {
+        title: "4. Interrogative (Tanya)",
+        description: "Pindahkan 'Will' atau 'To-be' ke depan kalimat.",
+        pattern: "Will + Subject + V1? / Am/Is/Are + Subject + going to + V1?",
+        examples: [
+          "Will you marry me?",
+          "Are you going to study tonight?"
+        ],
+        icon: "❓"
       }
     ]
   }
@@ -783,7 +865,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   const [showReview, setShowReview] = useState(false);
   const [mastery, setMastery] = useState<GrammarMastery>(() => {
     const saved = localStorage.getItem('grammar_mastery');
-    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0, simplePast: 0 };
+    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0, simplePast: 0, simpleFuture: 0 };
   });
   const [view, setView] = useState<'menu' | 'study' | 'quiz' | 'verbs'>(() => {
     return 'menu';
@@ -886,7 +968,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                 <span className="text-3xl">🧩</span>
                 <div>
                   <h3 className="font-black text-amber-900 text-xl">Lanjut Quiz Sebelumnya?</h3>
-                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : selectedTopic === 'presentContinuous' ? 'Present Continuous' : 'Simple Past'}.</p>
+                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : selectedTopic === 'presentContinuous' ? 'Present Continuous' : selectedTopic === 'simplePast' ? 'Simple Past' : 'Simple Future'}.</p>
                 </div>
               </div>
               <button 
@@ -960,6 +1042,26 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
               </button>
               <button onClick={() => startStudy('simplePast')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
               <button onClick={() => startQuiz('simplePast')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
+            </div>
+          </div>
+
+          {/* Simple Future Module */}
+          <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col">
+            <div className="text-5xl mb-4 text-left">🚀</div>
+            <h2 className="text-3xl font-black text-indigo-600 mb-2">Simple Future</h2>
+            <div className="w-full bg-indigo-50 p-4 rounded-2xl mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-xs text-indigo-400">Mastery</span>
+                <span className="font-black text-indigo-600">{mastery.simpleFuture}%</span>
+              </div>
+              <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${mastery.simpleFuture}%` }} className="h-full bg-indigo-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 font-bold mb-8 flex-1">Planned and spontaneous futures.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => startStudy('simpleFuture')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
+              <button onClick={() => startQuiz('simpleFuture')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
             </div>
           </div>
         </div>
@@ -1152,11 +1254,16 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                         Use <span className="font-bold">am/is/are + Verb-ing</span>. 
                         Don't forget the to-be! (I am, you are, he is).
                       </>
-                    ) : (
+                    ) : selectedTopic === 'simplePast' ? (
                       <>
                         Great job! <span className="font-bold text-indigo-600">Simple Past</span> is for things that are finished. 
                         Most use <span className="font-bold">-ed</span>, but watch out for <span className="italic italic-not-really">Irregular Verbs</span> {"(go -> went)"}. 
                         For negatives and questions, use <span className="font-bold">Did</span> + Verb 1.
+                      </>
+                    ) : (
+                      <>
+                        Fantastic! <span className="font-bold text-indigo-600">Simple Future</span> helps you talk about tomorrow. 
+                        Use <span className="font-bold">will</span> for quick decisions and <span className="italic font-bold">be going to</span> for plans you already have.
                       </>
                     )}
                   </p>
