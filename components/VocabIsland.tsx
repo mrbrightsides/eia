@@ -13,7 +13,8 @@ const CATEGORIES = [
   { id: 'feelings', name: 'Feelings', idn: 'Perasaan', icon: '😊' },
   { id: 'body_parts', name: 'Body Parts', idn: 'Bagian Tubuh', icon: '👋' },
   { id: 'transportation', name: 'Transportation', idn: 'Transportasi', icon: '🚁' },
-  { id: 'weather', name: 'Weather', idn: 'Cuaca', icon: '🌦️' }
+  { id: 'weather', name: 'Weather', idn: 'Cuaca', icon: '🌦️' },
+  { id: 'numbers', name: 'Numbers 1-20', idn: 'Angka 1-20', icon: '🔢' }
 ];
 
 interface VocabIslandProps {

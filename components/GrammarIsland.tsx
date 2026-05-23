@@ -494,9 +494,28 @@ const SIMPLE_FUTURE_QUESTIONS: Question[] = [
   { id: 330, type: 'mcq', question: "____ you (be) my friend forever?", options: ["Will", "Are going to", "Do"], answer: "Will" }
 ];
 
-type GrammarTopic = 'simplePresent' | 'presentContinuous' | 'simplePast' | 'simpleFuture';
+const SUBJECT_ACTION_QUESTIONS: Question[] = [
+  { id: 1, type: 'mcq', question: "In the sentence 'The cat sleeps', who is the Subject?", options: ["The cat", "sleeps"], answer: "The cat" },
+  { id: 2, type: 'mcq', question: "In the sentence 'Budi eats an apple', what is the Action (Verb)?", options: ["Budi", "eats", "apple"], answer: "eats" },
+  { id: 3, type: 'mcq', question: "Identify the Subject: 'My mother cooks dinner.'", options: ["My mother", "cooks", "dinner"], answer: "My mother" },
+  { id: 4, type: 'mcq', question: "Identify the Action: 'Birds fly in the sky.'", options: ["Birds", "fly", "sky"], answer: "fly" },
+  { id: 5, type: 'mcq', question: "In 'I like pizza', the word 'like' is a...", options: ["Subject", "Action (Verb)"], answer: "Action (Verb)" },
+  { id: 6, type: 'mcq', question: "In 'Toby the bear is happy', who is the Subject?", options: ["Toby the bear", "happy", "is"], answer: "Toby the bear" },
+  { id: 7, type: 'mcq', question: "Choose the Action: 'I ____ English every day.'", options: ["study", "English", "every"], answer: "study" },
+  { id: 8, type: 'mcq', question: "Who is doing the action in 'The dog barks'?", options: ["The dog", "barks"], answer: "The dog" },
+  { id: 9, type: 'mcq', question: "Find the Action: 'She runs very fast.'", options: ["She", "runs", "fast"], answer: "runs" },
+  { id: 10, type: 'mcq', question: "Find the Subject: 'An elephant is big.'", options: ["elephant", "is", "big"], answer: "elephant" },
+  { id: 11, type: 'mcq', question: "'Teacher teaches at school.' Actionnya yang mana?", options: ["Teacher", "teaches", "school"], answer: "teaches" },
+  { id: 12, type: 'mcq', question: "'Budi plays ball.' Subjeknya siapa?", options: ["Budi", "plays", "ball"], answer: "Budi" },
+  { id: 13, type: 'mcq', question: "Subject biasanya di awal kalimat. Benar atau Salah?", options: ["Benar", "Salah"], answer: "Benar" },
+  { id: 14, type: 'mcq', question: "Action adalah apa yang dilakukan subjek. Benar atau Salah?", options: ["Benar", "Salah"], answer: "Benar" },
+  { id: 15, type: 'mcq', question: "Identify the Action: 'Jump high!'", options: ["Anak Kecil", "Jump"], answer: "Jump" }
+];
+
+type GrammarTopic = 'subjectAction' | 'simplePresent' | 'presentContinuous' | 'simplePast' | 'simpleFuture';
 
 const TOPIC_QUESTIONS: Record<GrammarTopic, Question[]> = {
+  subjectAction: SUBJECT_ACTION_QUESTIONS,
   simplePresent: SIMPLE_PRESENT_QUESTIONS,
   presentContinuous: PRESENT_CONTINUOUS_QUESTIONS,
   simplePast: SIMPLE_PAST_QUESTIONS,
@@ -505,6 +524,7 @@ const TOPIC_QUESTIONS: Record<GrammarTopic, Question[]> = {
 
 
 interface GrammarMastery {
+  subjectAction: number;
   simplePresent: number;
   presentContinuous: number;
   simplePast: number;
@@ -512,6 +532,44 @@ interface GrammarMastery {
 }
 
 const STUDY_CONTENT = {
+  subjectAction: {
+    title: "Subject & Action (Foundations) 🧱",
+    tips: [
+      {
+        title: "1. Apa itu Subject?",
+        description: "Subject (Subjek) adalah orang, hewan, atau benda yang melakukan sesuatu. Biasanya ada di awal kalimat.",
+        pattern: "Subject + ...",
+        examples: [
+          "The cat (Kucing itu)",
+          "My mother (Ibu saya)",
+          "Budi"
+        ],
+        icon: "👦"
+      },
+      {
+        title: "2. Apa itu Action?",
+        description: "Action (Verb/Kata Kerja) adalah kegiatan yang dilakukan. Seperti makan, lari, atau tidur.",
+        pattern: "... + Action + ...",
+        examples: [
+          "eats (makan)",
+          "runs (lari)",
+          "sleeps (tidur)"
+        ],
+        icon: "🏃"
+      },
+      {
+        title: "3. Pola Dasar",
+        description: "Kalimat bahasa Inggris paling dasar butuh Subject dan Action.",
+        pattern: "Subject + Action",
+        examples: [
+          "Budi eats. (Budi makan)",
+          "The dog barks. (Anjing menggonggong)",
+          "Birds fly. (Burung terbang)"
+        ],
+        icon: "🧩"
+      }
+    ]
+  },
   simplePresent: {
     title: "Simple Present Tense 📚",
     tips: [
@@ -865,7 +923,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   const [showReview, setShowReview] = useState(false);
   const [mastery, setMastery] = useState<GrammarMastery>(() => {
     const saved = localStorage.getItem('grammar_mastery');
-    return saved ? JSON.parse(saved) : { simplePresent: 0, presentContinuous: 0, simplePast: 0, simpleFuture: 0 };
+    return saved ? JSON.parse(saved) : { subjectAction: 0, simplePresent: 0, presentContinuous: 0, simplePast: 0, simpleFuture: 0 };
   });
   const [view, setView] = useState<'menu' | 'study' | 'quiz' | 'verbs'>(() => {
     return 'menu';
@@ -968,7 +1026,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                 <span className="text-3xl">🧩</span>
                 <div>
                   <h3 className="font-black text-amber-900 text-xl">Lanjut Quiz Sebelumnya?</h3>
-                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'simplePresent' ? 'Simple Present' : selectedTopic === 'presentContinuous' ? 'Present Continuous' : selectedTopic === 'simplePast' ? 'Simple Past' : 'Simple Future'}.</p>
+                  <p className="text-amber-700 font-bold">Kamu sedang mengerjakan topik {selectedTopic === 'subjectAction' ? 'Subject vs action' : selectedTopic === 'simplePresent' ? 'Simple Present' : selectedTopic === 'presentContinuous' ? 'Present Continuous' : selectedTopic === 'simplePast' ? 'Simple Past' : 'Simple Future'}.</p>
                 </div>
               </div>
               <button 
@@ -982,6 +1040,29 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl pt-10">
+          {/* Subject & Action Module */}
+          <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col border-4 border-indigo-200">
+            <div className="flex justify-between items-start mb-4">
+              <div className="text-5xl">🧱</div>
+              <span className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">FOUNDATION</span>
+            </div>
+            <h2 className="text-3xl font-black text-indigo-600 mb-2">Subject & Action</h2>
+            <div className="w-full bg-indigo-50 p-4 rounded-2xl mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-xs text-indigo-400">Mastery</span>
+                <span className="font-black text-indigo-600">{mastery.subjectAction}%</span>
+              </div>
+              <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${mastery.subjectAction}%` }} className="h-full bg-indigo-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 font-bold mb-8 flex-1">Who is doing what? Let's find out!</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => startStudy('subjectAction')} className="w-full bg-indigo-100 text-indigo-600 py-4 rounded-2xl font-black hover:bg-indigo-200 transition-all">STUDY TIPS</button>
+              <button onClick={() => startQuiz('subjectAction')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all">TAKE QUIZ</button>
+            </div>
+          </div>
+
           {/* Simple Present Module */}
           <div className="bg-white p-10 rounded-[40px] shadow-2xl flex flex-col">
             <div className="text-5xl mb-4 text-left">📝</div>
@@ -1242,7 +1323,12 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
                 <div className="space-y-4">
                   <h4 className="font-black text-indigo-900 border-b border-indigo-200 pb-2">💡 Quick Reinforcement</h4>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    {selectedTopic === 'simplePresent' ? (
+                    {selectedTopic === 'subjectAction' ? (
+                      <>
+                        You are a champion! Now you know that every sentence needs a <span className="font-bold text-indigo-600">Subject</span> (Who) and an <span className="font-bold text-indigo-600">Action</span> (What).
+                        Keep finding them in every book you read!
+                      </>
+                    ) : selectedTopic === 'simplePresent' ? (
                       <>
                         Remember! We use <span className="font-bold text-indigo-600">Simple Present</span> for routines and facts. 
                         Add <span className="font-bold border-b-2 border-indigo-200">-s/-es</span> only for <span className="italic">He, She, It</span>. 
