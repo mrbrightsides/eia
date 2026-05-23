@@ -22,6 +22,7 @@ import TutorialOverlay from './components/TutorialOverlay';
 import GreetingIsland from './components/GreetingIsland';
 import WisdomIsland from './components/WisdomIsland';
 import GrammarIsland from './components/GrammarIsland';
+import Confetti from './components/Confetti';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
 const RANKS = ["Little Scout", "Junior Explorer", "Word Wizard", "Language Legend", "Island Master"];
@@ -118,6 +119,8 @@ const App: React.FC = () => {
 
   const [rewardMsg, setRewardMsg] = useState<{ text: string, points: number } | null>(null);
   const [levelUp, setLevelUp] = useState(false);
+  const [confettiType, setConfettiType] = useState<'burst' | 'sides' | 'star'>('burst');
+  const [isConfettiActive, setIsConfettiActive] = useState(false);
   const [showStreakSplash, setShowStreakSplash] = useState(false);
   const [showBadges, setShowBadges] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
@@ -175,6 +178,8 @@ const App: React.FC = () => {
       const newLevel = LEVEL_THRESHOLDS.filter(t => newPoints >= t).length;
       if (newLevel > oldLevel) {
         setLevelUp(true);
+        setConfettiType('star');
+        setIsConfettiActive(true);
         setTimeout(() => setLevelUp(false), 4000);
       }
       return newPoints;
@@ -237,6 +242,8 @@ const App: React.FC = () => {
     const updated = { ...dailyQuest, isClaimed: true };
     setDailyQuest(updated);
     localStorage.setItem('dailyQuest', JSON.stringify(updated));
+    setConfettiType('sides');
+    setIsConfettiActive(true);
     addPoints(dailyQuest.reward, `Daily Mission Completed! 🏆`);
     setShowQuestModal(false);
   };
@@ -767,6 +774,13 @@ const App: React.FC = () => {
       )}
 
       {rewardMsg && <div className="fixed bottom-10 right-10 bg-white border-4 border-yellow-400 p-4 rounded-3xl shadow-2xl animate-reward-toast z-[100] flex items-center gap-3"><span className="text-3xl animate-character-breathe">⭐</span><div><div className="font-black text-yellow-600 text-lg">+{rewardMsg.points} Points!</div><div className="text-sm text-gray-500 font-bold">{rewardMsg.text}</div></div></div>}
+      
+      <Confetti 
+        active={isConfettiActive} 
+        type={confettiType} 
+        onComplete={() => setIsConfettiActive(false)} 
+        duration={confettiType === 'star' ? 1000 : 3000}
+      />
       
       {levelUp && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-blue-600/20 backdrop-blur-sm animate-in fade-in duration-500">

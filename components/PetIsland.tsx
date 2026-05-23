@@ -24,6 +24,10 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
   const [eating, setEating] = useState(false);
   const [petting, setPetting] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [lastInteraction, setLastInteraction] = useState<number>(() => {
+    const saved = localStorage.getItem('petLastInteraction');
+    return saved ? parseInt(saved, 10) : Date.now();
+  });
   const [happiness, setHappiness] = useState(() => {
     const saved = localStorage.getItem('petHappiness');
     return saved ? parseInt(saved, 10) : 50;
@@ -64,6 +68,23 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
     localStorage.setItem('petHappiness', happiness.toString());
   }, [happiness]);
 
+  useEffect(() => {
+    localStorage.setItem('petLastInteraction', lastInteraction.toString());
+  }, [lastInteraction]);
+
+  const updateInteraction = () => {
+    setLastInteraction(Date.now());
+  };
+
+  const getMood = () => {
+    const diff = (Date.now() - lastInteraction) / (1000 * 60); // minutes
+    if (diff < 30) return { label: 'Happy', emoji: '✨', color: 'text-yellow-400' };
+    if (diff < 120) return { label: 'Idle', emoji: '💤', color: 'text-blue-300' };
+    return { label: 'Lonely', emoji: '🥺', color: 'text-gray-400' };
+  };
+
+  const currentMood = getMood();
+
   const getInitialGreeting = async () => {
     setIsTyping(true);
     try {
@@ -84,6 +105,7 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
     const updatedEaten = [...(profile.eatenWords || []), word];
     const updatedProfile = { ...profile, eatenWords: updatedEaten };
     onUpdateProfile(updatedProfile);
+    updateInteraction();
 
     // Audio & Visual feedback
     await playPronunciation(`Yum! ${word}!`);
@@ -106,6 +128,7 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
   const handlePet = async () => {
     if (petting || eating) return;
     setPetting(true);
+    updateInteraction();
     setHappiness(prev => Math.min(prev + 10, 100));
     
     addPoints(5, "Wordy loved the pets! ❤️");
@@ -125,6 +148,7 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
   const handlePlay = async () => {
     if (playing || eating || petting) return;
     setPlaying(true);
+    updateInteraction();
     setHappiness(prev => Math.min(prev + 15, 100));
     
     addPoints(10, "Wordy had so much fun playing! ⚽");
@@ -200,9 +224,18 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className={`text-[180px] leading-none transition-all duration-700 select-none cursor-pointer drop-shadow-2xl`}
+              className={`text-[180px] leading-none transition-all duration-700 select-none cursor-pointer drop-shadow-2xl relative`}
             >
                <span className="animate-character-blink block">{currentStage.emoji}</span>
+               
+               {/* Mood Badge */}
+               <motion.div 
+                 animate={{ scale: [1, 1.2, 1] }}
+                 transition={{ repeat: Infinity, duration: 2 }}
+                 className="absolute top-0 right-0 bg-white w-16 h-16 rounded-full shadow-lg border-4 border-sky-50 flex items-center justify-center text-3xl"
+               >
+                 {currentMood.emoji}
+               </motion.div>
             </motion.div>
             
             <AnimatePresence>
