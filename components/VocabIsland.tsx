@@ -6,6 +6,8 @@ import { getVocabulary, playPronunciation } from '../services/geminiService';
 const CATEGORIES = [
   { id: 'animals', name: 'Animals', idn: 'Hewan', icon: '🐘' },
   { id: 'food', name: 'Food', idn: 'Makanan', icon: '🍕' },
+  { id: 'fruits', name: 'Fruits', idn: 'Buah-buahan', icon: '🍎' },
+  { id: 'flowers', name: 'Flowers', idn: 'Bunga', icon: '🌸' },
   { id: 'colors', name: 'Colors', idn: 'Warna', icon: '🌈' },
   { id: 'hobbies', name: 'Hobbies', idn: 'Hobi', icon: '⚽' },
   { id: 'actions', name: 'Actions', idn: 'Tindakan', icon: '🏃' },
@@ -14,7 +16,9 @@ const CATEGORIES = [
   { id: 'body_parts', name: 'Body Parts', idn: 'Bagian Tubuh', icon: '👋' },
   { id: 'transportation', name: 'Transportation', idn: 'Transportasi', icon: '🚁' },
   { id: 'weather', name: 'Weather', idn: 'Cuaca', icon: '🌦️' },
-  { id: 'numbers', name: 'Numbers 1-20', idn: 'Angka 1-20', icon: '🔢' }
+  { id: 'numbers', name: 'Numbers 1-20', idn: 'Angka 1-20', icon: '🔢' },
+  { id: 'everyday_objects', name: 'Everyday Objects', idn: 'Benda Sekitar', icon: '🎒' },
+  { id: 'scenery', name: 'Scenery', idn: 'Pemandangan', icon: '🏔️' }
 ];
 
 interface VocabIslandProps {
