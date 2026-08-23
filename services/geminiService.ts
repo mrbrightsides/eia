@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Modality } from "@google/genai";
 import { Flashcard, Quest, ScrambleWord, DailyQuest } from "../types";
 
-const createAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const createAi = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 const callAiWithRetry = async (fn: (ai: GoogleGenAI) => Promise<any>, retries = 2): Promise<any> => {
   try {
