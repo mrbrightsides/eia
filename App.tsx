@@ -898,6 +898,18 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
     });
   };
 
+  const handleQuickEnter = () => {
+    onComplete({
+      name: name.trim() || 'Explorer',
+      avatar: avatar || '🐯',
+      title: 'Little Scout',
+      joinedDate: new Date().toISOString(),
+      learnedWords: [],
+      eatenWords: [],
+      tutorialComplete: true
+    });
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 flex items-center justify-center p-6 font-['Quicksand'] relative overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20 flex flex-wrap gap-20 p-10 pointer-events-none">
@@ -909,6 +921,15 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
       </div>
       
       <div className="bg-white w-full max-w-lg rounded-[50px] shadow-2xl p-10 text-center relative z-10 border-8 border-white">
+        {/* Quick Close (X) button */}
+        <button
+          onClick={handleQuickEnter}
+          title="Tutup & Masuk Langsung (Skip / Close)"
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-lg font-black transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-sm"
+        >
+          ✕
+        </button>
+
         {step === 1 ? (
           <div className="animate-in slide-in-from-right duration-500">
             <h1 className="text-4xl font-black text-blue-600 mb-2">AHOY, EXPLORER! 🚢</h1>
@@ -925,9 +946,16 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
             <button 
               disabled={!name.trim()}
               onClick={() => setStep(2)}
-              className="mt-8 w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-2xl shadow-xl hover:bg-blue-700 disabled:opacity-30 disabled:translate-y-0 active:scale-95 transition-all"
+              className="mt-8 w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-2xl shadow-xl hover:bg-blue-700 disabled:opacity-30 disabled:translate-y-0 active:scale-95 transition-all cursor-pointer"
             >
               NEXT (SELANJUTNYA) ➡️
+            </button>
+
+            <button
+              onClick={handleQuickEnter}
+              className="mt-4 text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>⏩</span> Lewati & Masuk Sebagai Penjelajah
             </button>
           </div>
         ) : (
@@ -939,7 +967,7 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
                 <button
                   key={a.emoji}
                   onClick={() => setAvatar(a.emoji)}
-                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center border-4 transition-all ${avatar === a.emoji ? 'bg-blue-500 border-blue-600 scale-110 shadow-lg' : 'bg-gray-50 border-gray-100 grayscale hover:grayscale-0'}`}
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center border-4 transition-all cursor-pointer ${avatar === a.emoji ? 'bg-blue-500 border-blue-600 scale-110 shadow-lg' : 'bg-gray-50 border-gray-100 grayscale hover:grayscale-0'}`}
                 >
                   <span className="text-4xl animate-character-breathe">
                     <span className="animate-character-blink block">{a.emoji}</span>
@@ -951,17 +979,24 @@ const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void }>
             <div className="flex gap-4">
               <button 
                 onClick={() => setStep(1)}
-                className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-3xl font-black text-lg hover:bg-gray-200 transition-all"
+                className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-3xl font-black text-lg hover:bg-gray-200 transition-all cursor-pointer"
               >
                 BACK
               </button>
               <button 
                 onClick={handleFinish}
-                className="flex-2 bg-green-500 text-white py-4 px-8 rounded-3xl font-black text-xl shadow-xl hover:bg-green-600 active:scale-95 transition-all"
+                className="flex-2 bg-green-500 text-white py-4 px-8 rounded-3xl font-black text-xl shadow-xl hover:bg-green-600 active:scale-95 transition-all cursor-pointer"
               >
                 START ADVENTURE! 🚀
               </button>
             </div>
+
+            <button
+              onClick={handleQuickEnter}
+              className="mt-4 text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>⏩</span> Lewati & Langsung Main
+            </button>
           </div>
         )}
       </div>

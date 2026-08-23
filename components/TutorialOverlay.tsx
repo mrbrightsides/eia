@@ -83,6 +83,15 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, userName 
       </div>
 
       <div className="bg-white w-full max-w-lg rounded-[60px] shadow-[0_30px_100px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in duration-500 border-[12px] border-white relative">
+        {/* Close (X) Button */}
+        <button
+          onClick={onComplete}
+          title="Tutup & Lewati Tutorial (Close / Skip)"
+          className="absolute top-4 right-4 z-30 w-11 h-11 bg-black/25 hover:bg-black/40 text-white rounded-full flex items-center justify-center text-xl font-black backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-lg border-2 border-white/40"
+        >
+          ✕
+        </button>
+
         {/* Top Gradient Header */}
         <div className={`bg-gradient-to-br ${step.color} p-10 text-white text-center transition-colors duration-700`}>
           <div className="text-9xl mb-4 animate-character-breathe inline-block">
@@ -117,18 +126,25 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, userName 
             {currentStep > 0 && (
                <button 
                 onClick={() => setCurrentStep(currentStep - 1)}
-                className="flex-1 bg-gray-100 text-gray-400 py-5 rounded-3xl font-black text-xl hover:bg-gray-200 active:scale-95 transition-all"
+                className="flex-1 bg-gray-100 text-gray-400 py-5 rounded-3xl font-black text-xl hover:bg-gray-200 active:scale-95 transition-all cursor-pointer"
                >
                  BACK
                </button>
             )}
             <button 
               onClick={next}
-              className={`flex-[2] bg-gradient-to-r ${step.color} text-white py-5 rounded-3xl font-black text-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all ring-8 ring-blue-50`}
+              className={`flex-[2] bg-gradient-to-r ${step.color} text-white py-5 rounded-3xl font-black text-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all ring-8 ring-blue-50 cursor-pointer`}
             >
               {currentStep === TUTORIAL_STEPS.length - 1 ? "LET'S PLAY! 🚀" : "NEXT ➡️"}
             </button>
           </div>
+
+          <button
+            onClick={onComplete}
+            className="mt-4 text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors inline-flex items-center gap-1 cursor-pointer"
+          >
+            <span>⏩</span> Lewati Panduan (Skip Tutorial)
+          </button>
         </div>
         
         {/* Toby's Speech Tail */}
