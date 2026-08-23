@@ -381,18 +381,44 @@ export const translateStoryMagic = async (
 ): Promise<MagicTranslationResult> => {
   return callAiWithRetry(async (ai) => {
     const prompt = direction === 'id-to-en'
-      ? `You are Toby the friendly bear teacher for kids on English Island. 
-Translate this Indonesian paragraph/story into lively, clear English.
-Story Tone Style: "${tone}" (e.g. natural, fairytale, superhero, funny, adventure).
-Ensure it is accurate, vibrant, and natural for kids/students.
-Also select 3 to 5 key interesting vocabulary words from the English translation and provide their Indonesian translation, a matching emoji, part of speech, and an example sentence.
-Also provide a short encouraging note for the student in Indonesian from Toby (tobyNote), and an interesting English language tip/fun fact (funFact).
+      ? `You are Toby the friendly bear teacher for kids on English Island.
+TASK: Translate the given student's Indonesian text into vibrant, natural, grammatically correct ENGLISH.
+
+CRITICAL INSTRUCTIONS:
+1. "translatedText" MUST ALWAYS BE 100% IN ENGLISH. Do NOT output Indonesian in "translatedText".
+2. Story Tone Style: "${tone}" (e.g. natural, fairytale, superhero, funny, adventure).
+3. If the input text contains typos, informal Indonesian, or regional slang, understand the intended meaning and output clean, lively English.
+4. "keyWords": Pick 3 to 5 key vocabulary words from the resulting ENGLISH translation. For each word, give:
+   - "word": The English word
+   - "meaning": The Indonesian translation/meaning
+   - "emoji": A fitting single emoji
+   - "partOfSpeech": noun / verb / adjective / adverb
+   - "example": A simple English example sentence
+5. "tobyNote": A warm, encouraging 1-sentence note in Indonesian from Toby praising the student's imagination.
+6. "funFact": A fun, simple fact or tip in Indonesian about one of the English words.
 
 Indonesian text to translate:
-"${text}"`
-      : `You are Toby the friendly bear teacher. Translate this English story/paragraph into natural, kid-friendly Indonesian.
-Input English text:
-"${text}"`;
+"""
+${text}
+"""`
+      : `You are Toby the friendly bear teacher for kids on English Island.
+TASK: Translate the given student's English text into natural, friendly INDONESIAN.
+
+CRITICAL INSTRUCTIONS:
+1. "translatedText" MUST BE IN INDONESIAN.
+2. "keyWords": Pick 3 to 5 key English vocabulary words from the original English input or translation. For each word, give:
+   - "word": The English word
+   - "meaning": The Indonesian translation
+   - "emoji": A fitting single emoji
+   - "partOfSpeech": noun / verb / adjective / adverb
+   - "example": A simple English sentence
+3. "tobyNote": A warm 1-sentence note in Indonesian from Toby.
+4. "funFact": A fun English language fact in Indonesian.
+
+English text to translate:
+"""
+${text}
+"""`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
