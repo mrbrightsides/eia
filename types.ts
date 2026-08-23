@@ -17,7 +17,8 @@ export enum GameType {
   I_SPY = 'I_SPY',
   GREETING = 'GREETING',
   WISDOM = 'WISDOM',
-  GRAMMAR = 'GRAMMAR'
+  GRAMMAR = 'GRAMMAR',
+  TRANSLATOR = 'TRANSLATOR'
 }
 
 export interface PetState {
@@ -66,7 +67,7 @@ export interface DailyQuest {
   goal: number;
   current: number;
   reward: number;
-  type: 'vocab' | 'chat' | 'scramble' | 'any' | 'singing' | 'scavenger' | 'tracing';
+  type: 'vocab' | 'chat' | 'scramble' | 'any' | 'singing' | 'scavenger' | 'tracing' | 'translator';
   isClaimed: boolean;
   date: string;
 }
@@ -91,7 +92,7 @@ export interface UserProfile {
 
 export interface JournalEntry {
   id: string;
-  type: 'photo' | 'drawing' | 'movie' | 'tracing' | 'badge';
+  type: 'photo' | 'drawing' | 'movie' | 'tracing' | 'badge' | 'story';
   english: string;
   indonesian: string;
   data: string; // base64 or URL

@@ -1,8 +1,11 @@
 {
   "name": "English Island Adventure",
-  "description": "A fun, bilingual (Indonesian-English) immersive app for elementary students to learn English through games, AI-powered conversations, visual challenges, grammar practice, and Islamic wisdom lessons.",
+  "description": "A fun, bilingual (Indonesian-English) immersive app for elementary students to learn English through games, AI-powered conversations, visual challenges, grammar practice, interactive live story translator, and Islamic wisdom lessons.",
   "requestFramePermissions": [
     "microphone",
     "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }

@@ -22,6 +22,7 @@ import TutorialOverlay from './components/TutorialOverlay';
 import GreetingIsland from './components/GreetingIsland';
 import WisdomIsland from './components/WisdomIsland';
 import GrammarIsland from './components/GrammarIsland';
+import TranslatorIsland from './components/TranslatorIsland';
 import Confetti from './components/Confetti';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
@@ -41,6 +42,7 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'first_login', name: 'First Arrival', icon: '🚢', description: 'Visited the island for the first time!', unlocked: true },
   { id: 'streak_3', name: 'Consistent Cub', icon: '🐾', description: 'Reached a 3-day streak!', unlocked: false },
   { id: 'vocab_master', name: 'Word Collector', icon: '📚', description: 'Completed a full vocabulary set!', unlocked: false },
+  { id: 'storyteller', name: 'Magic Storyteller', icon: '🪄', description: 'Translated and created magical stories!', unlocked: false },
   { id: 'artist', name: 'Magic Artist', icon: '🎨', description: 'Created 5 magical drawings!', unlocked: false },
   { id: 'singer', name: 'Pop Star', icon: '🎤', description: 'Sang your heart out on Singing Island!', unlocked: false },
   { id: 'dragon_master', name: 'Dragon Rider', icon: '🐲', description: 'Evolved Wordy to a Dragon!', unlocked: false },
@@ -89,8 +91,7 @@ const App: React.FC = () => {
   });
 
   const [mastery, setMastery] = useState<Record<GameType, number>>(() => {
-    const saved = localStorage.getItem('islandMastery');
-    return saved ? JSON.parse(saved) : {
+    const defaultMastery: Record<GameType, number> = {
       [GameType.VOCAB]: 0,
       [GameType.CHAT]: 0,
       [GameType.IMAGE_QUEST]: 0,
@@ -108,8 +109,19 @@ const App: React.FC = () => {
       [GameType.I_SPY]: 0,
       [GameType.GREETING]: 0,
       [GameType.WISDOM]: 0,
-      [GameType.GRAMMAR]: 0
+      [GameType.GRAMMAR]: 0,
+      [GameType.TRANSLATOR]: 0
     };
+    const saved = localStorage.getItem('islandMastery');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...defaultMastery, ...parsed };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return defaultMastery;
   });
 
   const [isMuted, setIsMuted] = useState<boolean>(() => {
@@ -220,11 +232,12 @@ const App: React.FC = () => {
     });
   };
 
-  const getMasteryLevel = (percent: number): IslandMastery => {
-    if (percent >= 100) return { percent, level: 'Master', idnLevel: 'Guru', color: 'bg-yellow-400' };
-    if (percent >= 70) return { percent, level: 'Expert', idnLevel: 'Ahli', color: 'bg-purple-500' };
-    if (percent >= 35) return { percent, level: 'Explorer', idnLevel: 'Penjelajah', color: 'bg-blue-500' };
-    return { percent, level: 'Novice', idnLevel: 'Pemula', color: 'bg-green-500' };
+  const getMasteryLevel = (percent: number = 0): IslandMastery => {
+    const val = typeof percent === 'number' && !isNaN(percent) ? Math.max(0, Math.min(percent, 100)) : 0;
+    if (val >= 100) return { percent: val, level: 'Master', idnLevel: 'Guru', color: 'bg-yellow-400' };
+    if (val >= 70) return { percent: val, level: 'Expert', idnLevel: 'Ahli', color: 'bg-purple-500' };
+    if (val >= 35) return { percent: val, level: 'Explorer', idnLevel: 'Penjelajah', color: 'bg-blue-500' };
+    return { percent: val, level: 'Novice', idnLevel: 'Pemula', color: 'bg-green-500' };
   };
 
   const updateQuestProgress = (type: DailyQuest['type'], amount: number = 1) => {
@@ -389,9 +402,29 @@ const App: React.FC = () => {
         return <WisdomIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.WISDOM, 10); }} onSave={(entry) => addToJournal(entry)} />;
       case GameType.GRAMMAR:
         return <GrammarIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.GRAMMAR, 20); }} />;
+      case GameType.TRANSLATOR:
+        return (
+          <TranslatorIsland
+            onBack={back}
+            addPoints={(amt, r) => {
+              addPoints(amt, r);
+              updateMastery(GameType.TRANSLATOR, 15);
+              updateQuestProgress('translator', 1);
+            }}
+            onSave={(entry) => addToJournal(entry)}
+            onWordLearned={addLearnedWord}
+            profile={profile}
+            masteryScore={mastery[GameType.TRANSLATOR] || 0}
+            masteryLevel={getMasteryLevel(mastery[GameType.TRANSLATOR] || 0)}
+            onUnlockBadge={unlockBadge}
+            points={points}
+            streak={streak}
+          />
+        );
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
+            <IslandCard title="Magic Quill" subtitle="Penerjemah Cerita Ajaib" icon="🪄" color="bg-indigo-600" description="Write Indonesian stories & translate them live to English!" onClick={() => setActiveIsland(GameType.TRANSLATOR)} mastery={getMasteryLevel(mastery[GameType.TRANSLATOR])} />
             <IslandCard title="Hello Hero" subtitle="Pahlawan Sapaan" icon="🦸‍♂️" color="bg-blue-600" description="Learn to introduce yourself to the world!" onClick={() => setActiveIsland(GameType.GREETING)} mastery={getMasteryLevel(mastery[GameType.GREETING])} />
             <IslandCard title="Tracing Trails" subtitle="Jejak Huruf" icon="✍️" color="bg-cyan-500" description="Follow the magic dots to draw letters!" onClick={() => setActiveIsland(GameType.TRACING)} mastery={getMasteryLevel(mastery[GameType.TRACING])} />
             <IslandCard title="Simon Says" subtitle="Toby Berkata" icon="📢" color="bg-yellow-500" description="Follow Toby's commands and earn points!" onClick={() => setActiveIsland(GameType.SIMON_SAYS)} mastery={getMasteryLevel(mastery[GameType.SIMON_SAYS])} />
@@ -681,7 +714,7 @@ const App: React.FC = () => {
                             <img src={entry.data} alt={entry.english} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           )}
                           <div className="absolute top-2 right-2 bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                            {entry.type === 'photo' ? '📷 PHOTO' : entry.type === 'movie' ? '🎬 MOVIE' : entry.type === 'tracing' ? '✍️ TRACING' : entry.type === 'badge' ? '🥇 BADGE' : '🎨 DRAWING'}
+                            {entry.type === 'photo' ? '📷 PHOTO' : entry.type === 'movie' ? '🎬 MOVIE' : entry.type === 'tracing' ? '✍️ TRACING' : entry.type === 'badge' ? '🥇 BADGE' : entry.type === 'story' ? '🪄 STORY' : '🎨 DRAWING'}
                           </div>
                         </div>
                         <div className="text-center">
@@ -944,34 +977,37 @@ const IslandCard: React.FC<{
   description: string; 
   onClick: () => void;
   mastery: IslandMastery;
-}> = ({ title, subtitle, icon, color, description, onClick, mastery }) => (
-  <div 
-    onClick={onClick}
-    className="bg-white rounded-[40px] shadow-xl overflow-hidden cursor-pointer hover:scale-105 transition-all border-4 border-transparent hover:border-blue-200 group relative"
-  >
-    <div className={`${color} p-8 flex items-center justify-center relative overflow-hidden`}>
-      <div className="text-8xl group-hover:rotate-12 group-hover:scale-110 transition-transform relative z-10 animate-character-breathe">
-        <span className="animate-character-blink block">{icon}</span>
-      </div>
-      <div className="absolute bottom-0 right-0 p-4 opacity-10 text-9xl transform translate-x-1/4 translate-y-1/4">
-        {icon}
-      </div>
-    </div>
-    <div className="p-6 text-center">
-      <h3 className="text-2xl font-black text-gray-800 leading-tight">{title}</h3>
-      <p className="text-gray-400 font-bold text-sm mb-4">{subtitle}</p>
-      <p className="text-xs text-gray-500 mb-6 font-medium italic">"{description}"</p>
-      
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div className={`h-full ${mastery.color} transition-all duration-1000`} style={{ width: `${mastery.percent}%` }} />
+}> = ({ title, subtitle, icon, color, description, onClick, mastery }) => {
+  const percent = typeof mastery?.percent === 'number' && !isNaN(mastery.percent) ? Math.max(0, Math.min(mastery.percent, 100)) : 0;
+  return (
+    <div 
+      onClick={onClick}
+      className="bg-white rounded-[40px] shadow-xl overflow-hidden cursor-pointer hover:scale-105 transition-all border-4 border-transparent hover:border-blue-200 group relative"
+    >
+      <div className={`${color} p-8 flex items-center justify-center relative overflow-hidden`}>
+        <div className="text-8xl group-hover:rotate-12 group-hover:scale-110 transition-transform relative z-10 animate-character-breathe">
+          <span className="animate-character-blink block">{icon}</span>
         </div>
-        <div className="text-[10px] font-black text-gray-400 uppercase">{mastery.level}</div>
+        <div className="absolute bottom-0 right-0 p-4 opacity-10 text-9xl transform translate-x-1/4 translate-y-1/4">
+          {icon}
+        </div>
       </div>
+      <div className="p-6 text-center">
+        <h3 className="text-2xl font-black text-gray-800 leading-tight">{title}</h3>
+        <p className="text-gray-400 font-bold text-sm mb-4">{subtitle}</p>
+        <p className="text-xs text-gray-500 mb-6 font-medium italic">"{description}"</p>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div className={`h-full ${mastery?.color || 'bg-green-500'} transition-all duration-1000`} style={{ width: `${percent}%` }} />
+          </div>
+          <div className="text-[10px] font-black text-gray-400 uppercase">{mastery?.level || 'NOVICE'}</div>
+        </div>
+      </div>
+      {percent >= 100 && <div className="absolute top-4 right-4 bg-yellow-400 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg animate-bounce">👑</div>}
     </div>
-    {mastery.percent >= 100 && <div className="absolute top-4 right-4 bg-yellow-400 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg animate-bounce">👑</div>}
-  </div>
-);
+  );
+};
 
 const InteractiveWater: React.FC = () => (
   <div className="w-full h-full relative opacity-40 overflow-hidden pointer-events-none">

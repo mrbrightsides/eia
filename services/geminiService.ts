@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type, GenerateContentResponse, Modality } from "@google/genai";
 import { Flashcard, Quest, ScrambleWord, DailyQuest } from "../types";
 
-const createAi = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const createAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const callAiWithRetry = async (fn: (ai: GoogleGenAI) => Promise<any>, retries = 2): Promise<any> => {
   try {
@@ -358,3 +358,84 @@ export const playPronunciation = async (text: string) => {
     console.error("Speech generation failed", error);
   }
 };
+
+export interface MagicTranslationResult {
+  translatedText: string;
+  sourceText: string;
+  tone: string;
+  keyWords: Array<{
+    word: string;
+    meaning: string;
+    emoji: string;
+    partOfSpeech: string;
+    example: string;
+  }>;
+  tobyNote: string;
+  funFact: string;
+}
+
+export const translateStoryMagic = async (
+  text: string,
+  tone: string = 'natural',
+  direction: 'id-to-en' | 'en-to-id' = 'id-to-en'
+): Promise<MagicTranslationResult> => {
+  return callAiWithRetry(async (ai) => {
+    const prompt = direction === 'id-to-en'
+      ? `You are Toby the friendly bear teacher for kids on English Island. 
+Translate this Indonesian paragraph/story into lively, clear English.
+Story Tone Style: "${tone}" (e.g. natural, fairytale, superhero, funny, adventure).
+Ensure it is accurate, vibrant, and natural for kids/students.
+Also select 3 to 5 key interesting vocabulary words from the English translation and provide their Indonesian translation, a matching emoji, part of speech, and an example sentence.
+Also provide a short encouraging note for the student in Indonesian from Toby (tobyNote), and an interesting English language tip/fun fact (funFact).
+
+Indonesian text to translate:
+"${text}"`
+      : `You are Toby the friendly bear teacher. Translate this English story/paragraph into natural, kid-friendly Indonesian.
+Input English text:
+"${text}"`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            translatedText: { type: Type.STRING },
+            sourceText: { type: Type.STRING },
+            tone: { type: Type.STRING },
+            keyWords: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  word: { type: Type.STRING },
+                  meaning: { type: Type.STRING },
+                  emoji: { type: Type.STRING },
+                  partOfSpeech: { type: Type.STRING },
+                  example: { type: Type.STRING }
+                },
+                required: ["word", "meaning", "emoji", "partOfSpeech", "example"]
+              }
+            },
+            tobyNote: { type: Type.STRING },
+            funFact: { type: Type.STRING }
+          },
+          required: ["translatedText", "keyWords", "tobyNote", "funFact"]
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    return {
+      translatedText: parsed.translatedText || "",
+      sourceText: text,
+      tone: tone,
+      keyWords: parsed.keyWords || [],
+      tobyNote: parsed.tobyNote || "Hebat sekali ceritamu! Teruslah menulis dan berlatih!",
+      funFact: parsed.funFact || "Menulis cerita dalam bahasa Inggris melatih imajinasi dan kosa katamu!"
+    };
+  });
+};
+
