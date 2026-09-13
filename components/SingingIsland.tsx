@@ -23,7 +23,7 @@ const SONGS: Song[] = [
     id: 'twinkle',
     title: 'Twinkle Twinkle Little Star',
     idnTitle: 'Bintang Kecil',
-    youtubeId: 'yCjJyiqpAuU', 
+    youtubeId: '0_1e8hW_S5w', // Super Simple Songs official Twinkle Twinkle Little Star
     lyrics: 'Twinkle, twinkle, little star, how I wonder what you are.',
     timedLyrics: [
       { start: 0, text: "Twinkle, twinkle, little star," },
@@ -190,9 +190,10 @@ const SONGS: Song[] = [
 interface SingingIslandProps {
   onBack: () => void;
   addPoints: (amount: number, reason: string) => void;
+  onSwitchToListening?: () => void;
 }
 
-const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
+const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints, onSwitchToListening }) => {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -272,7 +273,7 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
     setIsAnalyzing(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
@@ -317,9 +318,21 @@ const SingingIsland: React.FC<SingingIslandProps> = ({ onBack, addPoints }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative min-h-[70vh]">
-      <button onClick={onBack} className="mb-6 text-rose-600 font-bold flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
-        ⬅️ Back to Map (Kembali)
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <button onClick={onBack} className="text-rose-600 font-bold flex items-center gap-2 hover:translate-x-[-4px] transition-transform cursor-pointer">
+          ⬅️ Back to Map (Kembali)
+        </button>
+
+        {onSwitchToListening && (
+          <button
+            onClick={onSwitchToListening}
+            className="bg-violet-600 hover:bg-violet-700 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md flex items-center gap-2 hover:scale-105 transition-all cursor-pointer"
+          >
+            <span>🎧</span>
+            <span>Tantangan Tebak Kata Lagu (Listening Lagoon) ➡️</span>
+          </button>
+        )}
+      </div>
 
       {!selectedSong ? (
         <div className="text-center">

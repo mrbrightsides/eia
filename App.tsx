@@ -23,6 +23,7 @@ import GreetingIsland from './components/GreetingIsland';
 import WisdomIsland from './components/WisdomIsland';
 import GrammarIsland from './components/GrammarIsland';
 import TranslatorIsland from './components/TranslatorIsland';
+import { ListeningIsland } from './components/ListeningIsland';
 import Confetti from './components/Confetti';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
@@ -47,6 +48,7 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'singer', name: 'Pop Star', icon: '🎤', description: 'Sang your heart out on Singing Island!', unlocked: false },
   { id: 'dragon_master', name: 'Dragon Rider', icon: '🐲', description: 'Evolved Wordy to a Dragon!', unlocked: false },
   { id: 'writer', name: 'Letter Master', icon: '✍️', description: 'Traced 5 different letters perfectly!', unlocked: false },
+  { id: 'melody_master', name: 'Melody Master', icon: '🎧', description: 'Mastered cloze listening song quests in Listening Lagoon!', unlocked: false },
 ];
 
 const LEADERBOARD_NAMES = ["Budi 🚀", "Siti 🌈", "Andi 🐾", "Maya 🦄", "Eko 🦊", "Lina 🐘"];
@@ -100,6 +102,7 @@ const App: React.FC = () => {
       [GameType.SCRAMBLE]: 0,
       [GameType.CINEMA]: 0,
       [GameType.SINGING]: 0,
+      [GameType.LISTENING]: 0,
       [GameType.ROLEPLAY]: 0,
       [GameType.MIMIC]: 0,
       [GameType.SCAVENGER]: 0,
@@ -387,7 +390,27 @@ const App: React.FC = () => {
       case GameType.CINEMA:
         return <CinemaIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.CINEMA, 15); }} onSave={(entry) => addToJournal(entry)} />;
       case GameType.SINGING:
-        return <SingingIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.SINGING, 12); unlockBadge('singer'); }} />;
+        return (
+          <SingingIsland
+            onBack={back}
+            addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.SINGING, 12); unlockBadge('singer'); }}
+            onSwitchToListening={() => setActiveIsland(GameType.LISTENING)}
+          />
+        );
+      case GameType.LISTENING:
+        return (
+          <ListeningIsland
+            onBack={back}
+            addPoints={(amt, r) => {
+              addPoints(amt, r);
+              updateMastery(GameType.LISTENING, 15);
+              updateQuestProgress('listening', 1);
+            }}
+            onWordLearned={addLearnedWord}
+            onSave={(entry) => addToJournal(entry)}
+            onUnlockBadge={unlockBadge}
+          />
+        );
       case GameType.ROLEPLAY:
         return <RoleplayIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.ROLEPLAY, 10); }} />;
       case GameType.MIMIC:
@@ -425,6 +448,7 @@ const App: React.FC = () => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
             <IslandCard title="Magic Quill" subtitle="Penerjemah Cerita Ajaib" icon="🪄" color="bg-indigo-600" description="Write Indonesian stories & translate them live to English!" onClick={() => setActiveIsland(GameType.TRANSLATOR)} mastery={getMasteryLevel(mastery[GameType.TRANSLATOR])} />
+            <IslandCard title="Listening Lagoon" subtitle="Dengar & Tebak Lagu" icon="🎧" color="bg-violet-600" description="Dengarkan lagu anak-anak dan tebak kata lirik dalam tanda kurung (had/has)!" onClick={() => setActiveIsland(GameType.LISTENING)} mastery={getMasteryLevel(mastery[GameType.LISTENING])} />
             <IslandCard title="Hello Hero" subtitle="Pahlawan Sapaan" icon="🦸‍♂️" color="bg-blue-600" description="Learn to introduce yourself to the world!" onClick={() => setActiveIsland(GameType.GREETING)} mastery={getMasteryLevel(mastery[GameType.GREETING])} />
             <IslandCard title="Tracing Trails" subtitle="Jejak Huruf" icon="✍️" color="bg-cyan-500" description="Follow the magic dots to draw letters!" onClick={() => setActiveIsland(GameType.TRACING)} mastery={getMasteryLevel(mastery[GameType.TRACING])} />
             <IslandCard title="Simon Says" subtitle="Toby Berkata" icon="📢" color="bg-yellow-500" description="Follow Toby's commands and earn points!" onClick={() => setActiveIsland(GameType.SIMON_SAYS)} mastery={getMasteryLevel(mastery[GameType.SIMON_SAYS])} />
