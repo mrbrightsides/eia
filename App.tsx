@@ -24,6 +24,7 @@ import WisdomIsland from './components/WisdomIsland';
 import GrammarIsland from './components/GrammarIsland';
 import TranslatorIsland from './components/TranslatorIsland';
 import { ListeningIsland } from './components/ListeningIsland';
+import DailyActivitiesIsland from './components/DailyActivitiesIsland';
 import Confetti from './components/Confetti';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
@@ -49,6 +50,7 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'dragon_master', name: 'Dragon Rider', icon: '🐲', description: 'Evolved Wordy to a Dragon!', unlocked: false },
   { id: 'writer', name: 'Letter Master', icon: '✍️', description: 'Traced 5 different letters perfectly!', unlocked: false },
   { id: 'melody_master', name: 'Melody Master', icon: '🎧', description: 'Mastered cloze listening song quests in Listening Lagoon!', unlocked: false },
+  { id: 'daily_routine_star', name: 'Daily Routine Star', icon: '☀️', description: 'Completed Simple Present Daily Activities lesson & exercises!', unlocked: false },
 ];
 
 const LEADERBOARD_NAMES = ["Budi 🚀", "Siti 🌈", "Andi 🐾", "Maya 🦄", "Eko 🦊", "Lina 🐘"];
@@ -113,7 +115,8 @@ const App: React.FC = () => {
       [GameType.GREETING]: 0,
       [GameType.WISDOM]: 0,
       [GameType.GRAMMAR]: 0,
-      [GameType.TRANSLATOR]: 0
+      [GameType.TRANSLATOR]: 0,
+      [GameType.DAILY_ACTIVITIES]: 0
     };
     const saved = localStorage.getItem('islandMastery');
     if (saved) {
@@ -206,7 +209,18 @@ const App: React.FC = () => {
   const updateMastery = (type: GameType, increment: number) => {
     setMastery(prev => {
       const newVal = Math.min((prev[type] || 0) + increment, 100);
+      if (prev[type] === newVal) return prev;
       const updated = { ...prev, [type]: newVal };
+      localStorage.setItem('islandMastery', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const setExactMastery = (type: GameType, percent: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+    setMastery(prev => {
+      if ((prev[type] || 0) >= clamped) return prev;
+      const updated = { ...prev, [type]: clamped };
       localStorage.setItem('islandMastery', JSON.stringify(updated));
       return updated;
     });
@@ -444,9 +458,21 @@ const App: React.FC = () => {
             streak={streak}
           />
         );
+      case GameType.DAILY_ACTIVITIES:
+        return (
+          <DailyActivitiesIsland
+            onBack={back}
+            addPoints={addPoints}
+            onWordLearned={addLearnedWord}
+            onSave={(entry) => addToJournal(entry)}
+            onUnlockBadge={unlockBadge}
+            onMasteryUpdate={(pct) => setExactMastery(GameType.DAILY_ACTIVITIES, pct)}
+          />
+        );
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
+            <IslandCard title="Daily Activities" subtitle="Simple Present Tense" icon="☀️" color="bg-sky-600" description="Materi A–J: Kosakata harian, aturan -s/-es, don't/doesn't, do/does & latihan!" onClick={() => setActiveIsland(GameType.DAILY_ACTIVITIES)} mastery={getMasteryLevel(mastery[GameType.DAILY_ACTIVITIES])} />
             <IslandCard title="Magic Quill" subtitle="Penerjemah Cerita Ajaib" icon="🪄" color="bg-indigo-600" description="Write Indonesian stories & translate them live to English!" onClick={() => setActiveIsland(GameType.TRANSLATOR)} mastery={getMasteryLevel(mastery[GameType.TRANSLATOR])} />
             <IslandCard title="Listening Lagoon" subtitle="Dengar & Tebak Lagu" icon="🎧" color="bg-violet-600" description="Dengarkan lagu anak-anak dan tebak kata lirik dalam tanda kurung (had/has)!" onClick={() => setActiveIsland(GameType.LISTENING)} mastery={getMasteryLevel(mastery[GameType.LISTENING])} />
             <IslandCard title="Hello Hero" subtitle="Pahlawan Sapaan" icon="🦸‍♂️" color="bg-blue-600" description="Learn to introduce yourself to the world!" onClick={() => setActiveIsland(GameType.GREETING)} mastery={getMasteryLevel(mastery[GameType.GREETING])} />

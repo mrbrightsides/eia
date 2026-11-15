@@ -8,6 +8,7 @@ export enum GameType {
   SCRAMBLE = 'SCRAMBLE',
   CINEMA = 'CINEMA',
   SINGING = 'SINGING',
+  LISTENING = 'LISTENING',
   ROLEPLAY = 'ROLEPLAY',
   MIMIC = 'MIMIC',
   SCAVENGER = 'SCAVENGER',
@@ -18,7 +19,8 @@ export enum GameType {
   GREETING = 'GREETING',
   WISDOM = 'WISDOM',
   GRAMMAR = 'GRAMMAR',
-  TRANSLATOR = 'TRANSLATOR'
+  TRANSLATOR = 'TRANSLATOR',
+  DAILY_ACTIVITIES = 'DAILY_ACTIVITIES'
 }
 
 export interface PetState {
@@ -67,7 +69,7 @@ export interface DailyQuest {
   goal: number;
   current: number;
   reward: number;
-  type: 'vocab' | 'chat' | 'scramble' | 'any' | 'singing' | 'scavenger' | 'tracing' | 'translator';
+  type: 'vocab' | 'chat' | 'scramble' | 'any' | 'singing' | 'scavenger' | 'tracing' | 'translator' | 'listening';
   isClaimed: boolean;
   date: string;
 }
@@ -92,7 +94,7 @@ export interface UserProfile {
 
 export interface JournalEntry {
   id: string;
-  type: 'photo' | 'drawing' | 'movie' | 'tracing' | 'badge' | 'story';
+  type: 'photo' | 'drawing' | 'movie' | 'tracing' | 'badge' | 'story' | 'song';
   english: string;
   indonesian: string;
   data: string; // base64 or URL
