@@ -25,6 +25,7 @@ import GrammarIsland from './components/GrammarIsland';
 import TranslatorIsland from './components/TranslatorIsland';
 import { ListeningIsland } from './components/ListeningIsland';
 import DailyActivitiesIsland from './components/DailyActivitiesIsland';
+import PresentContinuousIsland from './components/PresentContinuousIsland';
 import Confetti from './components/Confetti';
 
 const LEVEL_THRESHOLDS = [0, 500, 1200, 2500, 5000, 10000];
@@ -51,6 +52,7 @@ const INITIAL_BADGES: Badge[] = [
   { id: 'writer', name: 'Letter Master', icon: '✍️', description: 'Traced 5 different letters perfectly!', unlocked: false },
   { id: 'melody_master', name: 'Melody Master', icon: '🎧', description: 'Mastered cloze listening song quests in Listening Lagoon!', unlocked: false },
   { id: 'daily_routine_star', name: 'Daily Routine Star', icon: '☀️', description: 'Completed Simple Present Daily Activities lesson & exercises!', unlocked: false },
+  { id: 'present_continuous_pro', name: 'Action Now Pro', icon: '⚡', description: 'Mastered Present Continuous Tense lesson & exercises!', unlocked: false },
 ];
 
 const LEADERBOARD_NAMES = ["Budi 🚀", "Siti 🌈", "Andi 🐾", "Maya 🦄", "Eko 🦊", "Lina 🐘"];
@@ -116,7 +118,8 @@ const App: React.FC = () => {
       [GameType.WISDOM]: 0,
       [GameType.GRAMMAR]: 0,
       [GameType.TRANSLATOR]: 0,
-      [GameType.DAILY_ACTIVITIES]: 0
+      [GameType.DAILY_ACTIVITIES]: 0,
+      [GameType.PRESENT_CONTINUOUS]: 0
     };
     const saved = localStorage.getItem('islandMastery');
     if (saved) {
@@ -469,10 +472,22 @@ const App: React.FC = () => {
             onMasteryUpdate={(pct) => setExactMastery(GameType.DAILY_ACTIVITIES, pct)}
           />
         );
+      case GameType.PRESENT_CONTINUOUS:
+        return (
+          <PresentContinuousIsland
+            onBack={back}
+            addPoints={addPoints}
+            onWordLearned={addLearnedWord}
+            onSave={(entry) => addToJournal(entry)}
+            onUnlockBadge={unlockBadge}
+            onMasteryUpdate={(pct) => setExactMastery(GameType.PRESENT_CONTINUOUS, pct)}
+          />
+        );
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto mt-10 pb-12 relative z-10">
             <IslandCard title="Daily Activities" subtitle="Simple Present Tense" icon="☀️" color="bg-sky-600" description="Materi A–J: Kosakata harian, aturan -s/-es, don't/doesn't, do/does & latihan!" onClick={() => setActiveIsland(GameType.DAILY_ACTIVITIES)} mastery={getMasteryLevel(mastery[GameType.DAILY_ACTIVITIES])} />
+            <IslandCard title="Happening Now" subtitle="Present Continuous Tense" icon="⚡" color="bg-emerald-600" description="Materi A–J: To Be (am/is/are), Verb-ing, perbandingan & 32 soal latihan!" onClick={() => setActiveIsland(GameType.PRESENT_CONTINUOUS)} mastery={getMasteryLevel(mastery[GameType.PRESENT_CONTINUOUS])} />
             <IslandCard title="Magic Quill" subtitle="Penerjemah Cerita Ajaib" icon="🪄" color="bg-indigo-600" description="Write Indonesian stories & translate them live to English!" onClick={() => setActiveIsland(GameType.TRANSLATOR)} mastery={getMasteryLevel(mastery[GameType.TRANSLATOR])} />
             <IslandCard title="Listening Lagoon" subtitle="Dengar & Tebak Lagu" icon="🎧" color="bg-violet-600" description="Dengarkan lagu anak-anak dan tebak kata lirik dalam tanda kurung (had/has)!" onClick={() => setActiveIsland(GameType.LISTENING)} mastery={getMasteryLevel(mastery[GameType.LISTENING])} />
             <IslandCard title="Hello Hero" subtitle="Pahlawan Sapaan" icon="🦸‍♂️" color="bg-blue-600" description="Learn to introduce yourself to the world!" onClick={() => setActiveIsland(GameType.GREETING)} mastery={getMasteryLevel(mastery[GameType.GREETING])} />
