@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">English Island Adventure</string>
+    <string name="title_activity_main">English Island Adventure</string>
+    <string name="package_name">com.englishisland.adventure</string>
+    <string name="custom_url_scheme">com.englishisland.adventure</string>
+</resources>

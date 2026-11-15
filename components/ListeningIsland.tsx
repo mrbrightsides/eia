@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { JournalEntry } from '../types';
+import { safeSetItem } from '../services/storageService';
 
 export interface ListeningQuestion {
   id: number;
@@ -570,11 +571,7 @@ export const ListeningIsland: React.FC<ListeningIslandProps> = ({
     if (selectedSong && !completedSongs.includes(selectedSong.id)) {
       const updated = [...completedSongs, selectedSong.id];
       setCompletedSongs(updated);
-      try {
-        localStorage.setItem('listening_completed_songs', JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
+      safeSetItem('listening_completed_songs', JSON.stringify(updated));
       if (updated.length >= 3 && onUnlockBadge) {
         onUnlockBadge('melody_master');
       }

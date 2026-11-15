@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { playPronunciation, translateStoryMagic, MagicTranslationResult } from '../services/geminiService';
 import { JournalEntry, UserProfile, IslandMastery } from '../types';
+import { safeSetItem } from '../services/storageService';
 
 interface TranslatorIslandProps {
   onBack: () => void;
@@ -155,7 +156,7 @@ const TranslatorIsland: React.FC<TranslatorIslandProps> = ({
         lastTranslatedTextRef.current = text.trim();
         const newCount = storiesCount + 1;
         setStoriesCount(newCount);
-        localStorage.setItem('magic_stories_count', newCount.toString());
+        safeSetItem('magic_stories_count', newCount.toString());
 
         addPoints(25, "Translated Story with Magic Quill! 🪄✨");
 

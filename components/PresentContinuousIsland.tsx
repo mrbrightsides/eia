@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { JournalEntry } from '../types';
+import { safeSetItem } from '../services/storageService';
 import {
   PC_INTRO_EXAMPLES,
   TO_BE_TABLE,
@@ -183,31 +184,31 @@ export const PresentContinuousIsland: React.FC<PresentContinuousIslandProps> = (
     }
   });
 
-  // Save to localStorage
+  // Save to localStorage safely
   useEffect(() => {
-    localStorage.setItem('pc_learned_verbs', JSON.stringify(learnedVerbIds));
+    safeSetItem('pc_learned_verbs', JSON.stringify(learnedVerbIds));
   }, [learnedVerbIds]);
 
   useEffect(() => {
-    localStorage.setItem('pc_mcq_answers', JSON.stringify(mcqAnswers));
-    localStorage.setItem('pc_mcq_checked', JSON.stringify(mcqChecked));
+    safeSetItem('pc_mcq_answers', JSON.stringify(mcqAnswers));
+    safeSetItem('pc_mcq_checked', JSON.stringify(mcqChecked));
   }, [mcqAnswers, mcqChecked]);
 
   useEffect(() => {
-    localStorage.setItem('pc_blank_answers', JSON.stringify(blankAnswers));
-    localStorage.setItem('pc_blank_checked', JSON.stringify(blankChecked));
+    safeSetItem('pc_blank_answers', JSON.stringify(blankAnswers));
+    safeSetItem('pc_blank_checked', JSON.stringify(blankChecked));
   }, [blankAnswers, blankChecked]);
 
   useEffect(() => {
-    localStorage.setItem('pc_own_sentences', JSON.stringify(ownSentences));
+    safeSetItem('pc_own_sentences', JSON.stringify(ownSentences));
   }, [ownSentences]);
 
   useEffect(() => {
-    localStorage.setItem('pc_friend_sentences', JSON.stringify(friendSentences));
+    safeSetItem('pc_friend_sentences', JSON.stringify(friendSentences));
   }, [friendSentences]);
 
   useEffect(() => {
-    localStorage.setItem('pc_rewards', JSON.stringify(awardedMilestones));
+    safeSetItem('pc_rewards', JSON.stringify(awardedMilestones));
   }, [awardedMilestones]);
 
   const grantOnce = (key: string, pts: number, reason: string) => {

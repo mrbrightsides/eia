@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameType, Badge, DailyQuest, IslandMastery, UserProfile, JournalEntry } from './types';
 import { generateDailyQuest } from './services/geminiService';
+import { safeSetItem, safeSaveJournal } from './services/storageService';
 import Header from './components/Header';
 import VocabIsland from './components/VocabIsland';
 import ChatIsland from './components/ChatIsland';
@@ -171,14 +172,14 @@ const App: React.FC = () => {
 
   const handleCreateProfile = (data: UserProfile) => {
     setProfile(data);
-    localStorage.setItem('userProfile', JSON.stringify(data));
+    safeSetItem('userProfile', JSON.stringify(data));
   };
 
   const handleUpdateProfile = () => {
     if (!profile || !editName.trim()) return;
     const updated = { ...profile, name: editName.trim(), avatar: editAvatar };
     setProfile(updated);
-    localStorage.setItem('userProfile', JSON.stringify(updated));
+    safeSetItem('userProfile', JSON.stringify(updated));
     setIsEditingProfile(false);
     addPoints(10, "Profile Updated! ✨");
   };
@@ -187,14 +188,14 @@ const App: React.FC = () => {
     if (!profile) return;
     const updated = { ...profile, tutorialComplete: true };
     setProfile(updated);
-    localStorage.setItem('userProfile', JSON.stringify(updated));
+    safeSetItem('userProfile', JSON.stringify(updated));
     addPoints(100, "Guided Tour Complete! 🗺️");
   };
 
   const addPoints = (amount: number, reason: string) => {
     setPoints(prev => {
       const newPoints = prev + amount;
-      localStorage.setItem('userPoints', newPoints.toString());
+      safeSetItem('userPoints', newPoints.toString());
       const oldLevel = LEVEL_THRESHOLDS.filter(t => prev >= t).length;
       const newLevel = LEVEL_THRESHOLDS.filter(t => newPoints >= t).length;
       if (newLevel > oldLevel) {
@@ -214,7 +215,7 @@ const App: React.FC = () => {
       const newVal = Math.min((prev[type] || 0) + increment, 100);
       if (prev[type] === newVal) return prev;
       const updated = { ...prev, [type]: newVal };
-      localStorage.setItem('islandMastery', JSON.stringify(updated));
+      safeSetItem('islandMastery', JSON.stringify(updated));
       return updated;
     });
   };
@@ -224,7 +225,7 @@ const App: React.FC = () => {
     setMastery(prev => {
       if ((prev[type] || 0) >= clamped) return prev;
       const updated = { ...prev, [type]: clamped };
-      localStorage.setItem('islandMastery', JSON.stringify(updated));
+      safeSetItem('islandMastery', JSON.stringify(updated));
       return updated;
     });
   };
@@ -234,7 +235,7 @@ const App: React.FC = () => {
     setProfile(prev => {
       if (!prev || prev.learnedWords.includes(word)) return prev;
       const updated = { ...prev, learnedWords: [...prev.learnedWords, word] };
-      localStorage.setItem('userProfile', JSON.stringify(updated));
+      safeSetItem('userProfile', JSON.stringify(updated));
       return updated;
     });
   };
@@ -247,8 +248,7 @@ const App: React.FC = () => {
     };
     setJournal(prev => {
       const updated = [fullEntry, ...prev];
-      localStorage.setItem('userJournal', JSON.stringify(updated));
-      return updated;
+      return safeSaveJournal(updated);
     });
   };
 
@@ -266,7 +266,7 @@ const App: React.FC = () => {
       const newCurrent = Math.min(dailyQuest.current + amount, dailyQuest.goal);
       const updated = { ...dailyQuest, current: newCurrent };
       setDailyQuest(updated);
-      localStorage.setItem('dailyQuest', JSON.stringify(updated));
+      safeSetItem('dailyQuest', JSON.stringify(updated));
     }
   };
 
@@ -274,7 +274,7 @@ const App: React.FC = () => {
     if (!dailyQuest || dailyQuest.current < dailyQuest.goal || dailyQuest.isClaimed) return;
     const updated = { ...dailyQuest, isClaimed: true };
     setDailyQuest(updated);
-    localStorage.setItem('dailyQuest', JSON.stringify(updated));
+    safeSetItem('dailyQuest', JSON.stringify(updated));
     setConfettiType('sides');
     setIsConfettiActive(true);
     addPoints(dailyQuest.reward, `Daily Mission Completed! 🏆`);
@@ -285,7 +285,7 @@ const App: React.FC = () => {
     setBadges(prev => {
       if (prev.find(b => b.id === id)?.unlocked) return prev;
       const updated = prev.map(b => b.id === id ? { ...b, unlocked: true } : b);
-      localStorage.setItem('userBadges', JSON.stringify(updated));
+      safeSetItem('userBadges', JSON.stringify(updated));
       return updated;
     });
   };
@@ -319,7 +319,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.muted = isMuted;
-    localStorage.setItem('isMuted', isMuted.toString());
+    safeSetItem('isMuted', isMuted.toString());
   }, [isMuted]);
 
   useEffect(() => {
@@ -334,8 +334,8 @@ const App: React.FC = () => {
       }
       
       setStreak(newStreak);
-      localStorage.setItem('streakCount', newStreak.toString());
-      localStorage.setItem('lastLogin', today);
+      safeSetItem('streakCount', newStreak.toString());
+      safeSetItem('lastLogin', today);
       
       // Calculate Enhanced Streak Bonus
       const baseLoginBonus = 50;
@@ -367,7 +367,7 @@ const App: React.FC = () => {
           date: today
         };
         setDailyQuest(fullQuest);
-        localStorage.setItem('dailyQuest', JSON.stringify(fullQuest));
+        safeSetItem('dailyQuest', JSON.stringify(fullQuest));
       });
     }
   }, []);
@@ -384,7 +384,7 @@ const App: React.FC = () => {
       case GameType.TRACING:
         return <TracingIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); updateMastery(GameType.TRACING, 10); }} onSave={(entry) => addToJournal(entry)} unlockBadge={() => unlockBadge('writer')} />;
       case GameType.PET:
-        return <PetIsland onBack={back} profile={profile} onUpdateProfile={(p) => { setProfile(p); localStorage.setItem('userProfile', JSON.stringify(p)); }} addPoints={addPoints} updateMastery={() => updateMastery(GameType.PET, 10)} unlockBadge={unlockBadge} />;
+        return <PetIsland onBack={back} profile={profile} onUpdateProfile={(p) => { setProfile(p); safeSetItem('userProfile', JSON.stringify(p)); }} addPoints={addPoints} updateMastery={() => updateMastery(GameType.PET, 10)} unlockBadge={unlockBadge} />;
       case GameType.VOCAB:
         return <VocabIsland onBack={back} addPoints={(amt, r) => { addPoints(amt, r); unlockBadge('vocab_master'); updateQuestProgress('vocab'); updateMastery(GameType.VOCAB, 5); }} onWordLearned={addLearnedWord} />;
       case GameType.CHAT:

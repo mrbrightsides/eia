@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { JournalEntry } from '../types';
+import { safeSetItem } from '../services/storageService';
 import {
   LESSON_USES,
   LESSON_INTRO_EXAMPLES,
@@ -198,36 +199,36 @@ export const DailyActivitiesIsland: React.FC<DailyActivitiesIslandProps> = ({
     }
   });
 
-  // Persist states
+  // Persist states safely
   useEffect(() => {
-    localStorage.setItem('daily_act_learned_vocab', JSON.stringify(learnedVocabIds));
+    safeSetItem('daily_act_learned_vocab', JSON.stringify(learnedVocabIds));
   }, [learnedVocabIds]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_mcq', JSON.stringify(mcqAnswers));
-    localStorage.setItem('daily_act_mcq_checked', JSON.stringify(mcqChecked));
+    safeSetItem('daily_act_mcq', JSON.stringify(mcqAnswers));
+    safeSetItem('daily_act_mcq_checked', JSON.stringify(mcqChecked));
   }, [mcqAnswers, mcqChecked]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_blanks', JSON.stringify(blankAnswers));
-    localStorage.setItem('daily_act_blanks_checked', JSON.stringify(blankChecked));
+    safeSetItem('daily_act_blanks', JSON.stringify(blankAnswers));
+    safeSetItem('daily_act_blanks_checked', JSON.stringify(blankChecked));
   }, [blankAnswers, blankChecked]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_mistakes', JSON.stringify(mistakeInputs));
-    localStorage.setItem('daily_act_mistakes_checked', JSON.stringify(mistakeChecked));
+    safeSetItem('daily_act_mistakes', JSON.stringify(mistakeInputs));
+    safeSetItem('daily_act_mistakes_checked', JSON.stringify(mistakeChecked));
   }, [mistakeInputs, mistakeChecked]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_own_sentences', JSON.stringify(ownSentences));
+    safeSetItem('daily_act_own_sentences', JSON.stringify(ownSentences));
   }, [ownSentences]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_family_sentences', JSON.stringify(familySentences));
+    safeSetItem('daily_act_family_sentences', JSON.stringify(familySentences));
   }, [familySentences]);
 
   useEffect(() => {
-    localStorage.setItem('daily_act_rewards', JSON.stringify(awardedMilestones));
+    safeSetItem('daily_act_rewards', JSON.stringify(awardedMilestones));
   }, [awardedMilestones]);
 
   const grantOnce = (milestoneKey: string, pointsAmount: number, reason: string) => {

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile } from '../types';
 import { playPronunciation, startChatSession } from '../services/geminiService';
+import { safeSetItem } from '../services/storageService';
 
 interface PetIslandProps {
   onBack: () => void;
@@ -65,11 +66,11 @@ const PetIsland: React.FC<PetIslandProps> = ({ onBack, profile, onUpdateProfile,
   }, [currentStage.id]);
 
   useEffect(() => {
-    localStorage.setItem('petHappiness', happiness.toString());
+    safeSetItem('petHappiness', happiness.toString());
   }, [happiness]);
 
   useEffect(() => {
-    localStorage.setItem('petLastInteraction', lastInteraction.toString());
+    safeSetItem('petLastInteraction', lastInteraction.toString());
   }, [lastInteraction]);
 
   const updateInteraction = () => {

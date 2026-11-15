@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { safeSetItem } from '../services/storageService';
 
 interface GrammarIslandProps {
   onBack: () => void;
@@ -935,9 +936,9 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
   // Save progress periodically when in quiz mode
   useEffect(() => {
     if (view === 'quiz' && selectedTopic) {
-      localStorage.setItem('grammar_quiz_topic', selectedTopic);
-      localStorage.setItem('grammar_quiz_current_idx', currentIdx.toString());
-      localStorage.setItem('grammar_quiz_answers', JSON.stringify(answers));
+      safeSetItem('grammar_quiz_topic', selectedTopic);
+      safeSetItem('grammar_quiz_current_idx', currentIdx.toString());
+      safeSetItem('grammar_quiz_answers', JSON.stringify(answers));
     }
   }, [view, selectedTopic, currentIdx, answers]);
 
@@ -976,7 +977,7 @@ const GrammarIsland: React.FC<GrammarIslandProps> = ({ onBack, addPoints }) => {
     if (!selectedTopic) return;
     const updatedMastery = { ...mastery, [selectedTopic]: Math.max(mastery[selectedTopic], Math.round(newScore)) };
     setMastery(updatedMastery);
-    localStorage.setItem('grammar_mastery', JSON.stringify(updatedMastery));
+    safeSetItem('grammar_mastery', JSON.stringify(updatedMastery));
   };
 
   const nextQuestion = () => {
